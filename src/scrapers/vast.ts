@@ -2,10 +2,12 @@ import { canonicalizeGpuName } from "@/lib/gpu-canonical";
 import type { GpuRow, Tier } from "@/lib/schema";
 
 const ENDPOINT = "https://console.vast.ai/api/v0/bundles/";
+// Fetch a comprehensive sample of currently-rentable on-demand offers.
+// We deliberately do NOT sort by price ascending — that biased the sample
+// toward consumer GPUs and missed almost all H100/A100/B200 supply.
 const QUERY = JSON.stringify({
-  order: [["dphtotal", "asc"]],
   type: "on-demand",
-  limit: 500,
+  limit: 2000,
   rentable: { eq: true },
 });
 

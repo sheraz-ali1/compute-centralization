@@ -51,7 +51,14 @@ export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[]
     }
   }
 
-  const diff = diffSnapshots(prevRows, allRows);
+  // Cold start: on the very first refresh, prevRows is empty so every row
+  // would register as "added", spamming the activity ticker with initial-
+  // population noise. Suppress diff events for the first refresh; normal
+  // diffs resume from refresh #2 onward.
+  const isFirstRefresh = prevRows.length === 0;
+  const diff = isFirstRefresh
+    ? { added: [], removed: [], repriced: [] }
+    : diffSnapshots(prevRows, allRows);
   cache.set(allRows, diff);
 
   // Persist
@@ -67,13 +74,15 @@ export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[]
   // Roll up gpu_prices
   await rollupPrices(allRows);
 
-  // Broadcast diff
-  sseBus.publish("diff", {
-    added: diff.added,
-    removed: diff.removed.map((r) => ({ id: r.id })),
-    repriced: diff.repriced,
-    fetched_at: cache.getLastFetched(),
-  });
+  // Broadcast diff (skipped on cold start — see above)
+  if (!isFirstRefresh) {
+    sseBus.publish("diff", {
+      added: diff.added,
+      removed: diff.removed.map((r) => ({ id: r.id })),
+      repriced: diff.repriced,
+      fetched_at: cache.getLastFetched(),
+    });
+  }
 
   return { rows: allRows, results };
 }
