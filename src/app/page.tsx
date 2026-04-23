@@ -9,9 +9,9 @@ import { Footer } from "@/components/Footer";
 export default function Home() {
   return (
     <div className="min-h-dvh flex flex-col">
-      <header className="px-8 h-16 flex items-center justify-between border-b border-border">
+      <header className="px-8 h-16 flex items-center justify-between border-b border-border/60 absolute inset-x-0 top-0 z-20 bg-transparent">
         <Wordmark />
-        <nav className="font-mono text-[12px] text-muted-foreground flex gap-6">
+        <nav className="font-mono text-[12px] text-foreground/55 flex gap-6">
           <a
             href="/api/snapshot.json"
             className="hover:text-foreground transition-colors"
@@ -37,7 +37,7 @@ export default function Home() {
         <div className="mx-auto w-full max-w-5xl">
           <Hero />
 
-          <div className="space-y-16 pb-20">
+          <div className="space-y-16 pt-4 pb-20">
             <SpotIndex />
             <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-12 lg:gap-16">
               <OrphanedLane />

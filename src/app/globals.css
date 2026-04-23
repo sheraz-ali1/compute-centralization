@@ -129,6 +129,10 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  /* Brighter accents for dark bg legibility */
+  --up: oklch(0.72 0.21 28);
+  --down: oklch(0.74 0.18 150);
+  --brand: var(--down);
 }
 
 @layer base {
