@@ -29,11 +29,11 @@ export function Footer() {
 
   return (
     <footer className="border-t border-border/60 px-8 py-8">
-      <div className="mx-auto max-w-4xl flex flex-col md:flex-row md:items-start md:justify-between gap-4 text-[12px] text-muted-foreground font-mono">
+      <div className="mx-auto max-w-4xl flex flex-col md:flex-row md:items-start md:justify-between gap-4 text-[12px] text-muted-foreground">
         <div className="space-y-1.5">
           <div>
             <span className="text-foreground/85">Direct integrations:</span>{" "}
-            RunPod · Vast.ai · Vultr —{" "}
+            RunPod · Vast.ai · Vultr ·{" "}
             {age !== null
               ? `refreshed ${Math.round(age)}s ago`
               : "connecting…"}

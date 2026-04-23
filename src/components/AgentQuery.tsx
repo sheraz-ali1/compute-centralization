@@ -82,9 +82,8 @@ export function AgentQuery() {
           <span className="text-foreground/60"> {`}`}</span>
           <span className="text-foreground/60">)</span>
         </div>
-        <div className="shrink-0 ml-3 flex items-center gap-2 text-[12px] text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-down animate-pulse" />
-          {ageS !== null ? `${ageS}s` : "syncing"}
+        <div className="shrink-0 ml-3 text-[12px] text-muted-foreground tabular">
+          {ageS !== null ? `${ageS}s ago` : "syncing"}
         </div>
       </div>
 

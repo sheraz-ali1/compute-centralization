@@ -1,6 +1,7 @@
 import { Wordmark } from "@/components/Wordmark";
 import { Hero } from "@/components/Hero";
 import { SpotIndex } from "@/components/SpotIndex";
+import { AgentScenarios } from "@/components/AgentScenarios";
 import { Footer } from "@/components/Footer";
 import { AudienceToggle } from "@/components/AudienceToggle";
 
@@ -17,9 +18,10 @@ export default function Home() {
           <Hero />
           <section
             id="live-market"
-            className="border-t border-border pt-20 pb-28 scroll-mt-16"
+            className="border-t border-border pt-20 pb-24 scroll-mt-16 space-y-24"
           >
             <SpotIndex />
+            <AgentScenarios />
           </section>
         </div>
       </main>

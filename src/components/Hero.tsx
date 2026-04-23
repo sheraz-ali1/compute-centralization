@@ -49,13 +49,9 @@ export function Hero() {
         <div>
           <motion.div
             variants={item}
-            className="inline-flex items-center gap-2.5 text-[13px] text-muted-foreground mb-6"
+            className="text-[13px] text-muted-foreground mb-6"
           >
-            <span
-              className="size-[7px] rounded-full bg-down animate-pulse"
-              aria-hidden
-            />
-            <span>MCP server for GPU compute</span>
+            MCP server for GPU compute
           </motion.div>
 
           <motion.h1

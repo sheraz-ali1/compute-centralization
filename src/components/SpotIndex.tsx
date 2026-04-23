@@ -222,42 +222,41 @@ function SpreadBar({
   const medianPct = ((median - cheapest) / range) * 100;
   return (
     <div className="space-y-2">
-      <div className="relative h-[5px]">
-        <div className="absolute inset-y-0 left-0 right-0 rounded-full bg-down/15" />
-        <Tooltip
-          content={
-            <div className="font-mono text-[11px] space-y-1 max-w-[300px]">
-              <div className="text-muted-foreground mb-1">Price ladder</div>
-              {[...allRows]
-                .sort(
-                  (a, b) =>
-                    a.price_per_gpu_hour_usd - b.price_per_gpu_hour_usd,
-                )
-                .slice(0, 10)
-                .map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex justify-between gap-4"
-                  >
-                    <span className="truncate">
-                      {providerLabel(r.provider)}{" "}
-                      <span className="text-muted-foreground">
-                        {tierLabel(r.tier)} ×{r.gpu_count}
-                        {r.metadata?.source === "getdeploying" ? " (via getdeploying)" : ""}
-                      </span>
+      <Tooltip
+        content={
+          <div className="text-[11.5px] space-y-1 max-w-[300px]">
+            <div className="text-muted-foreground mb-1">Price ladder</div>
+            {[...allRows]
+              .sort(
+                (a, b) =>
+                  a.price_per_gpu_hour_usd - b.price_per_gpu_hour_usd,
+              )
+              .slice(0, 10)
+              .map((r) => (
+                <div key={r.id} className="flex justify-between gap-4">
+                  <span className="truncate">
+                    {providerLabel(r.provider)}{" "}
+                    <span className="text-muted-foreground">
+                      {tierLabel(r.tier)} ×{r.gpu_count}
                     </span>
-                    <span>${r.price_per_gpu_hour_usd.toFixed(2)}</span>
-                  </div>
-                ))}
-            </div>
-          }
-        >
+                  </span>
+                  <span className="tabular">
+                    ${r.price_per_gpu_hour_usd.toFixed(2)}
+                  </span>
+                </div>
+              ))}
+          </div>
+        }
+      >
+        <div className="relative h-[3px] cursor-help">
+          <div className="absolute inset-y-0 left-0 right-0 rounded-full bg-foreground/8" />
+          {/* Cheapest segment in brand color */}
           <div
-            className="absolute top-1/2 -translate-y-1/2 size-[12px] rounded-full bg-down border-[2.5px] border-background cursor-help"
-            style={{ left: `calc(${medianPct.toFixed(2)}% - 6px)` }}
+            className="absolute inset-y-0 left-0 rounded-full bg-down/35"
+            style={{ width: `${Math.min(100, medianPct).toFixed(2)}%` }}
           />
-        </Tooltip>
-      </div>
+        </div>
+      </Tooltip>
       <div className="flex justify-between font-mono tabular text-[12px]">
         <div>
           <div className="text-foreground">${cheapest.toFixed(2)}</div>
