@@ -73,34 +73,22 @@ export function ComputeOrderBook() {
 
   return (
     <section>
-      <header className="mb-8 flex flex-col md:flex-row md:items-baseline md:justify-between gap-3">
-        <div>
-          <h2 className="font-sans text-[24px] tracking-[-0.018em] text-foreground">
-            The compute order book.
-          </h2>
-          <p className="mt-2 text-[14px] text-muted-foreground max-w-[58ch] leading-snug">
-            For each GPU, every available listing across the market sorted
-            cheapest to most expensive. The curve is cumulative supply at
-            price ≤ X. The shape of the curve is the shape of the market.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-1.5 shrink-0">
-          {HERO.map((g) => (
-            <button
-              key={g}
-              onClick={() => setModel(g)}
-              className={
-                "px-3 py-1.5 rounded-md text-[12.5px] transition-colors " +
-                (g === model
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.05]")
-              }
-            >
-              {g}
-            </button>
-          ))}
-        </div>
-      </header>
+      <div className="mb-6 flex flex-wrap gap-1.5">
+        {HERO.map((g) => (
+          <button
+            key={g}
+            onClick={() => setModel(g)}
+            className={
+              "px-3 py-1.5 rounded-md text-[12.5px] transition-colors " +
+              (g === model
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground hover:bg-foreground/[0.05]")
+            }
+          >
+            {g}
+          </button>
+        ))}
+      </div>
 
       {data.length === 0 ? (
         <div className="rounded-xl border border-border bg-background py-20 text-center text-muted-foreground text-[14px]">

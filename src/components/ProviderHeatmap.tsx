@@ -103,17 +103,6 @@ export function ProviderHeatmap() {
 
   return (
     <section>
-      <header className="mb-8">
-        <h2 className="font-sans text-[24px] tracking-[-0.018em] text-foreground">
-          The market at a glance.
-        </h2>
-        <p className="mt-2 text-[14px] text-muted-foreground max-w-[58ch] leading-snug">
-          Cheapest available $/GPU/hr for each model across the top{" "}
-          {providers.length} providers we track. Greener cells are the
-          cheapest in their row. Hover any cell for the underlying offers.
-        </p>
-      </header>
-
       <div className="overflow-x-auto rounded-xl border border-border bg-background">
         <table className="w-full border-collapse text-[12.5px] tabular">
           <thead>

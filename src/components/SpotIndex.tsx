@@ -96,19 +96,8 @@ export function SpotIndex() {
     };
   });
 
-  const totalProviders = new Set(rows.map((r) => r.provider)).size;
-
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-8">
-        <h2 className="font-sans text-[24px] tracking-[-0.015em] text-foreground">
-          Live market
-        </h2>
-        <div className="text-[12px] text-muted-foreground font-mono">
-          {totalProviders} providers · {rows.filter((r) => r.available).length}{" "}
-          tracked SKUs
-        </div>
-      </div>
       <div className="divide-y divide-border/70">
         {summary.map((s) => (
           <PriceRow key={s.model} s={s} />

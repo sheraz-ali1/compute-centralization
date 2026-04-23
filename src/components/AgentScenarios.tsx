@@ -140,17 +140,6 @@ export function AgentScenarios() {
 
   return (
     <section>
-      <header className="mb-10">
-        <h2 className="font-sans text-[24px] tracking-[-0.018em] text-foreground">
-          What a workload costs, today.
-        </h2>
-        <p className="mt-2 text-[14px] text-muted-foreground max-w-[60ch] leading-snug">
-          Concrete model-training and inference workloads, sized
-          realistically, priced from current listings across the providers
-          we track.
-        </p>
-      </header>
-
       <div className="space-y-6">
         {computed.map((c) => (
           <ScenarioCard key={c.scenario.id} {...c} />
