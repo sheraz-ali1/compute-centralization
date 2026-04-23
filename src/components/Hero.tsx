@@ -43,13 +43,13 @@ export function Hero() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-10 w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-x-16 gap-y-14 items-center"
+        className="relative z-10 w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-x-16 gap-y-14 items-start"
       >
         {/* LEFT — copy + actions */}
         <div>
           <motion.div
             variants={item}
-            className="text-[13px] text-muted-foreground mb-6"
+            className="text-[13px] text-muted-foreground mb-4"
           >
             MCP server for GPU compute
           </motion.div>
@@ -66,10 +66,16 @@ export function Hero() {
             className="mt-6 text-[16px] md:text-[17px] text-muted-foreground max-w-[46ch] leading-[1.6] text-balance"
           >
             An open index of the GPU spot market, built so that one day
-            agents can buy compute on their own.
+            agents can buy compute on their own.{" "}
+            <span className="text-muted-foreground/65">
+              Inspired by CS153 and AMP PBC.
+            </span>
           </motion.p>
 
-          <motion.div variants={item} className="mt-9 flex flex-wrap items-center gap-3">
+          <motion.div
+            variants={item}
+            className="mt-8 flex flex-wrap items-center gap-3"
+          >
             <button
               onClick={onConnect}
               className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-md bg-foreground text-background text-[13.5px] font-medium hover:bg-foreground/90 transition-colors"
@@ -102,17 +108,10 @@ export function Hero() {
 
           <motion.div
             variants={item}
-            className="mt-5 text-[12px] text-muted-foreground/70"
+            className="mt-4 text-[12px] text-muted-foreground/70"
           >
             {SNIPPET}
           </motion.div>
-
-          <motion.p
-            variants={item}
-            className="mt-10 text-[12px] text-muted-foreground/60"
-          >
-            Inspired by CS153 and AMP PBC.
-          </motion.p>
         </div>
 
         {/* RIGHT — live agent query */}
