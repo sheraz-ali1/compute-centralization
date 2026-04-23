@@ -1,66 +1,121 @@
-"use client"
+"use client";
 
-import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
+import {
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { springs } from "@/lib/springs";
+import { fontWeights } from "@/lib/font-weight";
+import { useShape } from "@/lib/shape-context";
 
-import { cn } from "@/lib/utils"
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-function TooltipProvider({
-  delay = 0,
-  ...props
-}: TooltipPrimitive.Provider.Props) {
-  return (
-    <TooltipPrimitive.Provider
-      data-slot="tooltip-provider"
-      delay={delay}
-      {...props}
-    />
-  )
+type TooltipSide = "top" | "right" | "bottom" | "left";
+
+interface TooltipProps {
+  content: ReactNode;
+  children: React.ReactElement;
+  side?: TooltipSide;
+  sideOffset?: number;
+  delayDuration?: number;
+  className?: string;
+  /** When true, forces the tooltip open. When false, forces it closed. When undefined, uses default hover/focus behavior. */
+  forceOpen?: boolean;
+  /** Called when the tooltip's internal open state changes (before forceOpen is applied). */
+  onOpenChange?: (open: boolean) => void;
 }
 
-function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+// ---------------------------------------------------------------------------
+// Animation helpers
+// ---------------------------------------------------------------------------
+
+function getSlideOffset(side: TooltipSide) {
+  switch (side) {
+    case "top":
+      return { y: 4 };
+    case "bottom":
+      return { y: -4 };
+    case "left":
+      return { x: 4 };
+    case "right":
+      return { x: -4 };
+  }
 }
 
-function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
-}
+// ---------------------------------------------------------------------------
+// Tooltip
+// ---------------------------------------------------------------------------
 
-function TooltipContent({
-  className,
-  side = "top",
-  sideOffset = 4,
-  align = "center",
-  alignOffset = 0,
+function Tooltip({
+  content,
   children,
-  ...props
-}: TooltipPrimitive.Popup.Props &
-  Pick<
-    TooltipPrimitive.Positioner.Props,
-    "align" | "alignOffset" | "side" | "sideOffset"
-  >) {
+  side = "top",
+  sideOffset = 8,
+  delayDuration = 200,
+  className,
+  forceOpen,
+  onOpenChange: onOpenChangeProp,
+}: TooltipProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = forceOpen !== undefined ? forceOpen : internalOpen;
+  const [mounted, setMounted] = useState(false);
+  const shape = useShape();
+
+  useEffect(() => {
+    if (open) setMounted(true);
+  }, [open]);
+
+  const handleExitComplete = () => {
+    if (!open) setMounted(false);
+  };
+
+  const slideOffset = getSlideOffset(side);
+
   return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Positioner
-        align={align}
-        alignOffset={alignOffset}
-        side={side}
-        sideOffset={sideOffset}
-        className="isolate z-50"
-      >
-        <TooltipPrimitive.Popup
-          data-slot="tooltip-content"
-          className={cn(
-            "z-50 inline-flex w-fit max-w-xs origin-(--transform-origin) items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-sm data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-            className
-          )}
-          {...props}
-        >
+    <TooltipPrimitive.Provider delayDuration={delayDuration}>
+      <TooltipPrimitive.Root open={open} onOpenChange={(v) => { setInternalOpen(v); onOpenChangeProp?.(v); }}>
+        <TooltipPrimitive.Trigger>
           {children}
-          <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%-2px)] rotate-45 rounded-[2px] bg-foreground fill-foreground data-[side=bottom]:top-1 data-[side=inline-end]:top-1/2! data-[side=inline-end]:-left-1 data-[side=inline-end]:-translate-y-1/2 data-[side=inline-start]:top-1/2! data-[side=inline-start]:-right-1 data-[side=inline-start]:-translate-y-1/2 data-[side=left]:top-1/2! data-[side=left]:-right-1 data-[side=left]:-translate-y-1/2 data-[side=right]:top-1/2! data-[side=right]:-left-1 data-[side=right]:-translate-y-1/2 data-[side=top]:-bottom-2.5" />
-        </TooltipPrimitive.Popup>
-      </TooltipPrimitive.Positioner>
-    </TooltipPrimitive.Portal>
-  )
+        </TooltipPrimitive.Trigger>
+        {mounted && (
+          <TooltipPrimitive.Portal forceMount>
+            <TooltipPrimitive.Content
+              side={side}
+              sideOffset={sideOffset}
+              forceMount
+              className="z-50"
+            >
+              <motion.div
+                className={cn(
+                  "bg-foreground text-background text-[12px] px-2 py-1",
+                  shape.bg,
+                  className
+                )}
+                style={{ fontVariationSettings: fontWeights.medium }}
+                initial={{ opacity: 0, ...slideOffset }}
+                animate={{
+                  opacity: open ? 1 : 0,
+                  x: 0,
+                  y: 0,
+                }}
+                transition={open ? springs.fast : { duration: 0.1 }}
+                onAnimationComplete={handleExitComplete}
+              >
+                {content}
+              </motion.div>
+            </TooltipPrimitive.Content>
+          </TooltipPrimitive.Portal>
+        )}
+      </TooltipPrimitive.Root>
+    </TooltipPrimitive.Provider>
+  );
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export { Tooltip };
+export type { TooltipProps, TooltipSide };
