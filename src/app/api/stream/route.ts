@@ -1,10 +1,12 @@
 import { sseBus } from "@/lib/sse-bus";
 import { cache } from "@/lib/cache";
 import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
+import { clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const ip = clientIp(req);
   let unsub: (() => void) | undefined;
   let heartbeat: ReturnType<typeof setInterval> | undefined;
 
@@ -19,16 +21,19 @@ export async function GET() {
           })}\n\n`,
         ),
       );
-      const sub = sseBus.subscribe((payload) =>
-        controller.enqueue(enc.encode(payload)),
+      const sub = sseBus.subscribe(
+        (payload) => controller.enqueue(enc.encode(payload)),
+        ip,
       );
       if (sub === null) {
-        // At capacity — close the stream cleanly with a notice.
+        // Either the global pool is full or this IP already holds its
+        // per-client share. Close the stream cleanly with a notice.
         controller.enqueue(
           enc.encode(
             `event: error\ndata: ${JSON.stringify({
               code: "stream_capacity",
-              message: "Live stream at capacity. Try again shortly.",
+              message:
+                "Live stream at capacity for this client. Close existing connections or try again shortly.",
             })}\n\n`,
           ),
         );

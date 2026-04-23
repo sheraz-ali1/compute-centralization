@@ -1,34 +1,54 @@
 type Listener = (data: string) => void;
 
-// Cap concurrent SSE listeners to prevent unbounded memory / FD growth
-// from a hostile client opening thousands of /api/stream connections.
-// On Railway a single instance has limited file descriptors and this
-// number is already comfortably above realistic legitimate usage.
+// Global cap on concurrent SSE listeners (memory + FD ceiling).
 const MAX_LISTENERS = 200;
+// Per-IP cap so no single client can monopolize the pool.
+const MAX_PER_IP = 5;
+
+type Entry = { fn: Listener; ip: string };
 
 class SseBus {
-  private listeners = new Set<Listener>();
-  /** Returns the unsubscribe function, or null if at capacity. */
-  subscribe(fn: Listener): (() => void) | null {
-    if (this.listeners.size >= MAX_LISTENERS) return null;
-    this.listeners.add(fn);
+  private entries = new Set<Entry>();
+  private perIpCount = new Map<string, number>();
+
+  /**
+   * Subscribe a listener identified by client IP. Returns the unsubscribe
+   * function, or null if either the global cap or the per-IP cap is hit.
+   */
+  subscribe(fn: Listener, ip: string): (() => void) | null {
+    if (this.entries.size >= MAX_LISTENERS) return null;
+    const ipCount = this.perIpCount.get(ip) ?? 0;
+    if (ipCount >= MAX_PER_IP) return null;
+
+    const entry: Entry = { fn, ip };
+    this.entries.add(entry);
+    this.perIpCount.set(ip, ipCount + 1);
+
     return () => {
-      this.listeners.delete(fn);
+      if (!this.entries.delete(entry)) return;
+      const c = (this.perIpCount.get(ip) ?? 1) - 1;
+      if (c <= 0) this.perIpCount.delete(ip);
+      else this.perIpCount.set(ip, c);
     };
   }
+
   publish(event: string, data: unknown) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-    for (const fn of this.listeners) {
+    for (const entry of this.entries) {
       try {
-        fn(payload);
+        entry.fn(payload);
       } catch {
         // listener errored — drop it so it can't keep failing
-        this.listeners.delete(fn);
+        this.entries.delete(entry);
+        const c = (this.perIpCount.get(entry.ip) ?? 1) - 1;
+        if (c <= 0) this.perIpCount.delete(entry.ip);
+        else this.perIpCount.set(entry.ip, c);
       }
     }
   }
+
   size() {
-    return this.listeners.size;
+    return this.entries.size;
   }
 }
 // Pin singleton on globalThis so it survives across module instances

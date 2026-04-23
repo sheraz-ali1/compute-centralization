@@ -65,6 +65,13 @@ export function Footer() {
           </a>
         </div>
       </div>
+      <div className="mx-auto max-w-4xl mt-6 pt-4 border-t border-border/40 text-[11px] text-muted-foreground/60 leading-relaxed">
+        Prices and availability are sourced live from public provider APIs
+        and aggregators. Provided as-is for informational purposes only,
+        with no warranty of accuracy or fitness for any particular use.
+        Verify with the source provider before committing spend. Not
+        financial advice.
+      </div>
     </footer>
   );
 }

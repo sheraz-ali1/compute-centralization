@@ -76,11 +76,10 @@ export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
   const cheapest = matches[0];
   const alternatives = matches.slice(1, 6);
 
-  // Market context applies the SAME filters as the candidate query so
-  // the median/total are about the slice the caller is shopping in,
-  // not the whole market. (Previously this used an unfiltered query
-  // which produced misleading context for tier/region-constrained
-  // requests.)
+  // Market context applies the SAME filters as the candidate query —
+  // including gpu_count — so the median/total describe the exact slice
+  // the caller is shopping in. An 8x H100 query should not see context
+  // skewed by 1x rows.
   const slice = listGpus({
     gpu_model: input.gpu_model,
     tier: input.tier,
@@ -88,7 +87,7 @@ export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
     region: input.region,
     available_only: true,
     limit: 500,
-  });
+  }).filter((r) => r.gpu_count === input.gpu_count);
   const prices = slice
     .map((r) => r.price_per_gpu_hour_usd)
     .sort((a, b) => a - b);

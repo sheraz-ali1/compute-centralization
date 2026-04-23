@@ -61,7 +61,16 @@ export function Hero() {
             An open index of the GPU spot market, built so that agents can
             help you provision the compute you need.{" "}
             <span className="text-muted-foreground/65">
-              Inspired by CS153 and AMP PBC.
+              Inspired by CS153 and{" "}
+              <a
+                href="https://amppublic.com/"
+                target="_blank"
+                rel="noopener"
+                className="underline underline-offset-2 decoration-muted-foreground/30 hover:decoration-foreground hover:text-foreground transition-colors"
+              >
+                AMP PBC
+              </a>
+              .
             </span>
           </motion.p>
 
