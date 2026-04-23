@@ -3,7 +3,15 @@ import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const base = new URL(req.url).origin;
+  // Behind a proxy (Railway, Vercel, etc.) `req.url` is the upstream
+  // localhost:8080 URL. Honor x-forwarded-host/proto so links resolve
+  // to the public hostname.
+  const headers = req.headers;
+  const forwardedHost = headers.get("x-forwarded-host") ?? headers.get("host");
+  const forwardedProto = headers.get("x-forwarded-proto") ?? "https";
+  const base = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : new URL(req.url).origin;
   const body = `# ComputeGrid
 
 Open price feed for the GPU spot market. Aggregates RunPod, Vast.ai, Vultr,
