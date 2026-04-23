@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 export default function Home() {
   return (
     <div className="min-h-dvh flex flex-col">
-      <header className="px-8 h-16 flex items-center justify-between border-b border-border/60">
+      <header className="px-8 h-16 flex items-center justify-between absolute inset-x-0 top-0 z-20">
         <Wordmark />
         <nav className="font-mono text-[12px] text-muted-foreground flex gap-6">
           <a
@@ -33,9 +33,12 @@ export default function Home() {
       <main className="flex-1 px-8">
         <div className="mx-auto w-full max-w-4xl">
           <Hero />
-          <div className="border-t border-border pt-16 pb-24">
+          <section
+            id="live-market"
+            className="border-t border-border pt-20 pb-28 scroll-mt-16"
+          >
             <SpotIndex />
-          </div>
+          </section>
         </div>
       </main>
 
