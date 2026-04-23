@@ -22,7 +22,10 @@ export function AgentQuery() {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setIdx((i) => (i + 1) % ROTATION.length), ROTATE_MS);
+    const t = setInterval(
+      () => setIdx((i) => (i + 1) % ROTATION.length),
+      ROTATE_MS,
+    );
     return () => clearInterval(t);
   }, []);
 
@@ -30,25 +33,33 @@ export function AgentQuery() {
   const result = useMemo(() => {
     const matching = rows.filter((r) => r.gpu_model === model && r.available);
     const cheapest = cheapestOf(matching);
-    const enterprise = cheapestOf(matching.filter((r) => ENTERPRISE_TIERS.has(r.tier)));
+    const enterprise = cheapestOf(
+      matching.filter((r) => ENTERPRISE_TIERS.has(r.tier)),
+    );
     const total = matching.length;
     const marketplaceListings = matching
       .filter((r) => COMMUNITY_TIERS.has(r.tier))
       .reduce((s, r) => s + r.offer_count, 0);
     const savings =
       cheapest && enterprise && enterprise.price_per_gpu_hour_usd > 0
-        ? (1 - cheapest.price_per_gpu_hour_usd / enterprise.price_per_gpu_hour_usd) * 100
+        ? (1 -
+            cheapest.price_per_gpu_hour_usd /
+              enterprise.price_per_gpu_hour_usd) *
+          100
         : null;
     return { cheapest, enterprise, total, marketplaceListings, savings };
   }, [rows, model]);
 
   const ageS = fetchedAt
-    ? Math.max(0, Math.round((Date.now() - new Date(fetchedAt).getTime()) / 1000))
+    ? Math.max(
+        0,
+        Math.round((Date.now() - new Date(fetchedAt).getTime()) / 1000),
+      )
     : null;
 
   return (
     <div className="rounded-lg border border-border bg-background/60 backdrop-blur-sm">
-      {/* Header bar — the agent's call */}
+      {/* Header — the agent's call signature */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-border/60 font-mono text-[12.5px]">
         <div className="text-foreground/85">
           <span className="text-muted-foreground">find_cheapest</span>(
@@ -68,13 +79,13 @@ export function AgentQuery() {
           <span className="text-foreground"> {`}`}</span>
           <span className="text-muted-foreground">)</span>
         </div>
-        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        <div className="flex items-center gap-2 text-[12px] text-muted-foreground/80 font-sans">
           <span className="size-1.5 rounded-full bg-down animate-pulse" />
-          {ageS !== null ? `${ageS}s` : "syncing"}
+          {ageS !== null ? `${ageS}s ago` : "syncing"}
         </div>
       </div>
 
-      {/* Body — the result */}
+      {/* Body — formatted result */}
       <AnimatePresence mode="wait">
         <motion.div
           key={model + (result.cheapest?.id ?? "x")}
@@ -87,39 +98,49 @@ export function AgentQuery() {
           {result.cheapest ? (
             <>
               <div className="flex items-baseline gap-3">
-                <div className="font-mono tabular text-[40px] leading-none text-foreground">
-                  <span className="text-muted-foreground text-[20px] mr-0.5">$</span>
+                <div className="font-sans tabular text-[40px] leading-none text-foreground tracking-[-0.02em]">
+                  <span className="text-muted-foreground text-[20px] mr-0.5">
+                    $
+                  </span>
                   {result.cheapest.price_per_gpu_hour_usd.toFixed(2)}
-                  <span className="text-muted-foreground text-[14px] ml-1">/hr</span>
+                  <span className="text-muted-foreground text-[14px] ml-1">
+                    /hr
+                  </span>
                 </div>
                 {result.savings !== null && result.savings > 5 && (
-                  <div className="font-mono tabular text-[15px] text-down">
+                  <div className="font-sans tabular text-[15px] text-down">
                     −{result.savings.toFixed(0)}%
                   </div>
                 )}
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-x-6 gap-y-3 text-[12px]">
-                <Field label="source">
-                  {providerLabel(result.cheapest.provider)}
+              <div className="mt-5 grid grid-cols-3 gap-x-6 gap-y-3 text-[13px]">
+                <Field label="Source">
+                  <span className="text-foreground">
+                    {providerLabel(result.cheapest.provider)}
+                  </span>{" "}
                   <span className="text-muted-foreground">
-                    {" "}
                     {tierLabel(result.cheapest.tier)}
                   </span>
                 </Field>
-                <Field label="vs managed">
-                  {result.enterprise
-                    ? `$${result.enterprise.price_per_gpu_hour_usd.toFixed(2)}/hr`
-                    : "—"}
-                  {result.enterprise && (
-                    <span className="text-muted-foreground">
-                      {" "}
-                      {providerLabel(result.enterprise.provider)}
-                    </span>
+                <Field label="Cloud price">
+                  {result.enterprise ? (
+                    <>
+                      <span className="text-foreground">
+                        ${result.enterprise.price_per_gpu_hour_usd.toFixed(2)}
+                      </span>{" "}
+                      <span className="text-muted-foreground">
+                        {providerLabel(result.enterprise.provider)}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
                   )}
                 </Field>
-                <Field label="market">
-                  {result.total} listings
+                <Field label="Market">
+                  <span className="text-foreground">
+                    {result.total} listings
+                  </span>
                   {result.marketplaceListings > 0 && (
                     <span className="text-muted-foreground">
                       {" "}
@@ -130,15 +151,15 @@ export function AgentQuery() {
               </div>
             </>
           ) : (
-            <div className="text-muted-foreground text-[13px] font-mono py-2">
+            <div className="text-muted-foreground text-[13px] py-2">
               no listings for {model}
             </div>
           )}
         </motion.div>
       </AnimatePresence>
 
-      {/* Footer — rotation indicator */}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-border/60 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/80">
+      {/* Footer */}
+      <div className="flex items-center justify-between px-5 py-3 border-t border-border/60 text-[12px] text-muted-foreground/70">
         <div>Live MCP response</div>
         <div className="flex items-center gap-1.5">
           {ROTATION.map((m, i) => (
@@ -165,10 +186,8 @@ function Field({
 }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground font-mono mb-1">
-        {label}
-      </div>
-      <div className="font-mono tabular text-foreground">{children}</div>
+      <div className="text-[11px] text-muted-foreground/80 mb-1">{label}</div>
+      <div className="tabular text-foreground/90">{children}</div>
     </div>
   );
 }

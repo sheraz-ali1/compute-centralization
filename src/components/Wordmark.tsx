@@ -3,10 +3,7 @@ import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
 
 const ease = [0.22, 1, 0.36, 1] as const;
-
-// Reveal pattern for the 3x3 cells: ordered by column then row so the
-// grid lights up from top-left in a slight sweep, ending with the
-// bottom-right accent cell. Indices are flat (row * 3 + col).
+// Diagonal sweep order (TL → BR)
 const REVEAL_ORDER = [0, 1, 3, 2, 4, 6, 5, 7, 8];
 
 const cellVariants: Variants = {
@@ -15,19 +12,19 @@ const cellVariants: Variants = {
     opacity: 1,
     scale: 1,
     transition: {
-      delay: REVEAL_ORDER.indexOf(i) * 0.05,
-      duration: 0.5,
+      delay: REVEAL_ORDER.indexOf(i) * 0.045,
+      duration: 0.55,
       ease,
     },
   }),
 };
 
 const labelVariants: Variants = {
-  hidden: { opacity: 0, x: -4 },
+  hidden: { opacity: 0, x: -6 },
   show: {
     opacity: 1,
     x: 0,
-    transition: { delay: 0.55, duration: 0.6, ease },
+    transition: { delay: 0.55, duration: 0.7, ease },
   },
 };
 
@@ -36,12 +33,12 @@ export function Wordmark({ className = "" }: { className?: string }) {
     <Link
       href="/"
       className={`group inline-flex items-center gap-2.5 ${className}`}
-      aria-label="ComputeGrid"
+      aria-label="Compute Grid"
     >
       <motion.svg
-        width="18"
-        height="18"
-        viewBox="0 0 18 18"
+        width="22"
+        height="22"
+        viewBox="0 0 22 22"
         initial="hidden"
         animate="show"
         aria-hidden
@@ -50,21 +47,24 @@ export function Wordmark({ className = "" }: { className?: string }) {
         {Array.from({ length: 9 }).map((_, i) => {
           const row = Math.floor(i / 3);
           const col = i % 3;
-          const isAccent = i === 8; // bottom-right cell = brand accent
+          const isAccent = i === 8;
           return (
             <motion.rect
               key={i}
-              x={col * 6.5}
-              y={row * 6.5}
-              width={4}
-              height={4}
+              x={col * 8}
+              y={row * 8}
+              width={5}
+              height={5}
               rx={1}
               custom={i}
               variants={cellVariants}
-              style={{ originX: "50%", originY: "50%", transformBox: "fill-box" }}
+              style={{
+                originX: "50%",
+                originY: "50%",
+                transformBox: "fill-box",
+              }}
               fill={isAccent ? "var(--brand)" : "currentColor"}
-              fillOpacity={isAccent ? 1 : 0.85}
-              className="group-hover:opacity-100 transition-opacity"
+              fillOpacity={isAccent ? 1 : 0.88}
             />
           );
         })}
@@ -73,9 +73,9 @@ export function Wordmark({ className = "" }: { className?: string }) {
         initial="hidden"
         animate="show"
         variants={labelVariants}
-        className="font-mono text-[14px] font-medium tabular tracking-[-0.02em] text-foreground"
+        className="font-sans text-[18px] font-semibold tracking-[-0.022em] text-foreground leading-none"
       >
-        computegrid
+        Compute Grid
       </motion.span>
     </Link>
   );

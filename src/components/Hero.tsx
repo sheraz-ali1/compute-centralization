@@ -49,7 +49,7 @@ export function Hero() {
         <div>
           <motion.div
             variants={item}
-            className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.18em] text-muted-foreground mb-6"
+            className="inline-flex items-center gap-2 text-[12.5px] text-muted-foreground mb-6"
           >
             <GridGlyph />
             <span>MCP server for GPU compute</span>
@@ -104,7 +104,7 @@ export function Hero() {
 
           <motion.div
             variants={item}
-            className="mt-5 font-mono text-[11.5px] text-muted-foreground/70"
+            className="mt-5 text-[12px] text-muted-foreground/70"
           >
             {SNIPPET}
           </motion.div>
