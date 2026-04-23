@@ -71,13 +71,15 @@ export function Hero() {
 
   return (
     <section className="relative -mx-8 min-h-[78vh] md:min-h-[88vh] flex items-center overflow-hidden">
-      {/* WebGL background */}
-      <div className="absolute inset-0 z-0">
+      {/* WebGL background — lazyLoad off so it loads above the fold */}
+      <div className="absolute inset-0 z-0 bg-background">
         <UnicornScene
           projectId="GdecGeosI8jL1JDvzHgU"
           sdkUrl="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.9/dist/unicornStudio.umd.js"
           width="100%"
           height="100%"
+          lazyLoad={false}
+          production={false}
         />
       </div>
 
