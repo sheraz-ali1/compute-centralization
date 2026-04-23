@@ -113,7 +113,7 @@ export function ProviderHeatmap() {
               {providers.map((p) => (
                 <th
                   key={p}
-                  className="px-3 h-12 text-right font-normal text-[10.5px] text-muted-foreground/75 border-b border-border whitespace-nowrap min-w-[78px]"
+                  className="px-3 h-12 text-center font-normal text-[10.5px] text-muted-foreground/75 border-b border-border whitespace-nowrap min-w-[78px]"
                   title={providerLabel(p)}
                 >
                   <div className="truncate">{providerLabel(p)}</div>
@@ -143,7 +143,7 @@ export function ProviderHeatmap() {
                       return (
                         <td
                           key={p}
-                          className="px-3 py-4 text-right text-muted-foreground/25 border-r border-border/25 last:border-r-0 align-middle"
+                          className="px-3 py-4 text-center text-muted-foreground/25 border-r border-border/25 last:border-r-0 align-middle"
                         >
                           —
                         </td>
@@ -158,7 +158,7 @@ export function ProviderHeatmap() {
                         key={p}
                         onMouseEnter={() => setHoveredCell(cellKey)}
                         onMouseLeave={() => setHoveredCell(null)}
-                        className="relative px-3 py-4 text-right border-r border-border/25 last:border-r-0 cursor-default transition-colors align-middle"
+                        className="relative px-3 py-4 text-center border-r border-border/25 last:border-r-0 cursor-default transition-colors align-middle"
                         style={{
                           background: cellColor(
                             cell.cheapestPerGpuHourUsd,
