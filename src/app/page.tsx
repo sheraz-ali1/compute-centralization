@@ -1,6 +1,7 @@
 import { Wordmark } from "@/components/Wordmark";
 import { Hero } from "@/components/Hero";
 import { SpotIndex } from "@/components/SpotIndex";
+import { ProviderHeatmap } from "@/components/ProviderHeatmap";
 import { AgentScenarios } from "@/components/AgentScenarios";
 import { Footer } from "@/components/Footer";
 import { AudienceToggle } from "@/components/AudienceToggle";
@@ -16,14 +17,21 @@ export default function Home() {
       <main className="flex-1 px-8">
         <div className="mx-auto w-full max-w-4xl">
           <Hero />
-          <section
-            id="live-market"
-            className="border-t border-border pt-20 pb-24 scroll-mt-16 space-y-24"
-          >
-            <SpotIndex />
-            <AgentScenarios />
-          </section>
         </div>
+        <section
+          id="live-market"
+          className="border-t border-border pt-20 pb-24 scroll-mt-16 space-y-24"
+        >
+          <div className="mx-auto w-full max-w-4xl">
+            <SpotIndex />
+          </div>
+          <div className="mx-auto w-full max-w-6xl">
+            <ProviderHeatmap />
+          </div>
+          <div className="mx-auto w-full max-w-4xl">
+            <AgentScenarios />
+          </div>
+        </section>
       </main>
 
       <Footer />
