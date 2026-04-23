@@ -145,7 +145,7 @@ export function ProviderHeatmap() {
                           key={p}
                           className="px-3 py-4 text-center text-muted-foreground/25 border-r border-border/25 last:border-r-0 align-middle"
                         >
-                          —
+                          {/* empty cell */}
                         </td>
                       );
                     }

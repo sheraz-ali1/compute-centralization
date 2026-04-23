@@ -1,5 +1,4 @@
 "use client";
-import { Section } from "./Section";
 import { useSnapshot } from "@/lib/use-snapshot";
 import { useEffect, useState } from "react";
 import type { GpuRow } from "@/lib/schema";
@@ -157,14 +156,20 @@ function PriceRow({ s }: { s: RowSummary }) {
         <div
           className={
             "tabular text-[20px] leading-none h-[20px] flex items-baseline justify-end " +
-            (s.savings !== null && s.savings > 5
-              ? "text-down"
-              : "text-muted-foreground/50")
+            (s.savings === null
+              ? "text-muted-foreground/40"
+              : s.savings >= 1
+                ? "text-down"
+                : s.savings <= -1
+                  ? "text-up"
+                  : "text-muted-foreground")
           }
         >
-          {s.savings !== null && s.savings > 5
-            ? `−${s.savings.toFixed(0)}%`
-            : "—"}
+          {s.savings === null
+            ? ""
+            : Math.abs(s.savings) < 1
+              ? "0%"
+              : `${s.savings > 0 ? "−" : "+"}${Math.abs(s.savings).toFixed(0)}%`}
         </div>
         <div className="text-[11px] text-muted-foreground/70 mt-2">
           vs managed
@@ -176,16 +181,18 @@ function PriceRow({ s }: { s: RowSummary }) {
         <div
           className={
             "tabular text-[20px] leading-none h-[20px] flex items-baseline justify-end " +
-            (s.delta !== null && s.delta < 0
-              ? "text-down"
-              : s.delta !== null && s.delta > 0
-                ? "text-up"
-                : "text-muted-foreground/50")
+            (s.delta === null
+              ? "text-muted-foreground/40"
+              : s.delta < 0
+                ? "text-down"
+                : s.delta > 0
+                  ? "text-up"
+                  : "text-muted-foreground")
           }
         >
-          {s.delta !== null
-            ? `${s.delta > 0 ? "+" : ""}${s.delta.toFixed(1)}%`
-            : "—"}
+          {s.delta === null
+            ? ""
+            : `${s.delta > 0 ? "+" : ""}${s.delta.toFixed(1)}%`}
         </div>
         <div className="text-[11px] text-muted-foreground/70 mt-2">24h</div>
       </div>

@@ -20,7 +20,10 @@ export const listGpusInput = z.object({
 });
 
 export function listGpus(input: z.infer<typeof listGpusInput>): GpuRow[] {
-  let rows = cache.getRows();
+  // Always operate on a copy of cache rows. The cache singleton is
+  // shared across all requests; .sort() in place would reorder it for
+  // every other concurrent caller.
+  let rows = cache.getRows().slice();
   if (input.gpu_model) {
     const q = input.gpu_model.toLowerCase();
     rows = rows.filter((r) => r.gpu_model.toLowerCase().includes(q));
@@ -56,6 +59,8 @@ export const findCheapestInput = z.object({
 });
 
 export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
+  // The candidate set: all rows matching the user's full filter,
+  // restricted to the requested gpu_count exactly.
   const matches = listGpus({
     gpu_model: input.gpu_model,
     tier: input.tier,
@@ -71,23 +76,41 @@ export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
   const cheapest = matches[0];
   const alternatives = matches.slice(1, 6);
 
-  // Market context: median + total available + 24h ago
-  const all = listGpus({
+  // Market context applies the SAME filters as the candidate query so
+  // the median/total are about the slice the caller is shopping in,
+  // not the whole market. (Previously this used an unfiltered query
+  // which produced misleading context for tier/region-constrained
+  // requests.)
+  const slice = listGpus({
     gpu_model: input.gpu_model,
+    tier: input.tier,
+    min_vram_gb: input.min_vram_gb,
+    region: input.region,
     available_only: true,
     limit: 500,
   });
-  const prices = all
+  const prices = slice
     .map((r) => r.price_per_gpu_hour_usd)
     .sort((a, b) => a - b);
   const median = prices.length ? prices[Math.floor(prices.length / 2)] : null;
-  const total = all.reduce((sum, r) => sum + r.offer_count, 0);
+  const total = slice.reduce((sum, r) => sum + r.offer_count, 0);
 
-  const ago = await sql<{ cheapest_price_per_gpu_hour_usd: number }[]>`
-    select cheapest_price_per_gpu_hour_usd from gpu_prices
-    where gpu_model = ${input.gpu_model}
-      and fetched_at <= now() - interval '24 hours'
-    order by fetched_at desc limit 1`;
+  // 24h-ago lookup. Resolve the canonical model from the cheapest row
+  // (so a substring search like "H100" still queries history under the
+  // resolved canonical name). Wrap in try/catch so an empty/missing
+  // gpu_prices table — common on a fresh deploy — doesn't take down
+  // the entire tool call.
+  let cheapest_24h_ago: number | null = null;
+  try {
+    const ago = await sql<{ cheapest_price_per_gpu_hour_usd: number }[]>`
+      select cheapest_price_per_gpu_hour_usd from gpu_prices
+      where gpu_model = ${cheapest.gpu_model}
+        and fetched_at <= now() - interval '24 hours'
+      order by fetched_at desc limit 1`;
+    cheapest_24h_ago = ago[0]?.cheapest_price_per_gpu_hour_usd ?? null;
+  } catch (e) {
+    console.warn("find_cheapest: gpu_prices lookup failed", e);
+  }
 
   return {
     cheapest,
@@ -95,7 +118,7 @@ export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
     market_context: {
       median_price_per_gpu_hour_usd: median,
       total_available_count: total,
-      cheapest_24h_ago: ago[0]?.cheapest_price_per_gpu_hour_usd ?? null,
+      cheapest_24h_ago,
     },
   };
 }

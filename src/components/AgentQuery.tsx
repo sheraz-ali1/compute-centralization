@@ -20,6 +20,14 @@ function cheapestOf(rows: GpuRow[]): GpuRow | null {
 export function AgentQuery() {
   const { rows, fetchedAt } = useSnapshot();
   const [idx, setIdx] = useState(0);
+  // 1Hz clock for displaying age. Lazy initializer keeps the initial
+  // value out of the render body; the interval callback is async so it's
+  // not "setState synchronously in an effect body".
+  const [now, setNow] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, []);
 
   useEffect(() => {
     const t = setInterval(
@@ -51,22 +59,16 @@ export function AgentQuery() {
   }, [rows, model]);
 
   const ageS = fetchedAt
-    ? Math.max(
-        0,
-        Math.round((Date.now() - new Date(fetchedAt).getTime()) / 1000),
-      )
+    ? Math.max(0, Math.round((now - new Date(fetchedAt).getTime()) / 1000))
     : null;
 
   return (
     <div className="rounded-xl border border-border bg-background/70 backdrop-blur-sm overflow-hidden">
       {/* Header — function call + age */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
-        <div className="font-mono text-[12.5px] text-foreground/85 truncate min-w-0">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 gap-3">
+        <div className="font-mono text-[12.5px] text-foreground/85 min-w-0">
           <span className="text-muted-foreground">find_cheapest</span>
           <span className="text-foreground/60">(</span>
-          <span className="text-foreground/60">{`{ `}</span>
-          <span className="text-muted-foreground">gpu_model</span>
-          <span className="text-foreground/60">: </span>
           <AnimatePresence mode="wait">
             <motion.span
               key={model}
@@ -79,10 +81,9 @@ export function AgentQuery() {
               &quot;{model}&quot;
             </motion.span>
           </AnimatePresence>
-          <span className="text-foreground/60"> {`}`}</span>
           <span className="text-foreground/60">)</span>
         </div>
-        <div className="shrink-0 ml-3 text-[12px] text-muted-foreground tabular">
+        <div className="shrink-0 text-[12px] text-muted-foreground tabular">
           {ageS !== null ? `${ageS}s ago` : "syncing"}
         </div>
       </div>
@@ -141,7 +142,7 @@ export function AgentQuery() {
                       </div>
                     </>
                   ) : (
-                    <span className="text-muted-foreground">—</span>
+                    <span className="text-muted-foreground/60">none</span>
                   )}
                 </Field>
                 <Field label="Market">

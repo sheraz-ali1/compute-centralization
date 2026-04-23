@@ -1,4 +1,3 @@
-import { canonicalizeGpuName } from "@/lib/gpu-canonical";
 import { perGpuVram } from "@/lib/gpu-vram";
 import type { GpuRow } from "@/lib/schema";
 

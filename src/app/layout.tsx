@@ -3,11 +3,11 @@ import { fontSans, fontMono, fontSerif } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ComputeGrid — open price feed for the GPU spot market",
+  title: "computegrid · open price feed for the GPU spot market",
   description:
-    "Real-time aggregate of GPU pricing and availability across compute providers. For agents and the humans they work for.",
+    "Real-time aggregate of GPU pricing and availability across compute providers. Built so that one day agents can buy compute on their own.",
   icons: {
-    icon: "/favicon.svg",
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
 };
 

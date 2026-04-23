@@ -19,9 +19,23 @@ export async function GET() {
           })}\n\n`,
         ),
       );
-      unsub = sseBus.subscribe((payload) =>
+      const sub = sseBus.subscribe((payload) =>
         controller.enqueue(enc.encode(payload)),
       );
+      if (sub === null) {
+        // At capacity — close the stream cleanly with a notice.
+        controller.enqueue(
+          enc.encode(
+            `event: error\ndata: ${JSON.stringify({
+              code: "stream_capacity",
+              message: "Live stream at capacity. Try again shortly.",
+            })}\n\n`,
+          ),
+        );
+        controller.close();
+        return;
+      }
+      unsub = sub;
       heartbeat = setInterval(
         () => controller.enqueue(enc.encode(": ping\n\n")),
         30_000,

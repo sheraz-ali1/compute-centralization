@@ -60,7 +60,7 @@ const SCENARIOS: Scenario[] = [
     workload: "Evaluation suite on B200",
     spec: "1× B200 × 4 hours",
     rationale:
-      "Full eval pass — MMLU, GSM8K, HumanEval, BBH — on the latest hardware. Single GPU, runs once per checkpoint.",
+      "Full eval pass over MMLU, GSM8K, HumanEval, BBH on the latest hardware. Single GPU, runs once per checkpoint.",
     recommended: "cheapest",
     gpu_model: "B200",
     gpu_count: 1,
@@ -288,7 +288,7 @@ function Column({
             {fmtUSD(pick.total)}
           </div>
           <div className="text-[12px] text-muted-foreground tabular">
-            ${pick.perGpuHour.toFixed(2)}/gpu/hr
+            ${pick.perGpuHour.toFixed(3)}/gpu/hr
           </div>
           <div className="text-[12px] text-muted-foreground mt-1.5">
             <span className="text-foreground/85">
@@ -301,7 +301,7 @@ function Column({
           </div>
         </>
       ) : (
-        <div className="text-[14px] text-muted-foreground">—</div>
+        <div className="text-[14px] text-muted-foreground/50">none listed</div>
       )}
     </div>
   );

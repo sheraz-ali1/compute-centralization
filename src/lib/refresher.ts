@@ -142,13 +142,27 @@ async function rollupPrices(rows: GpuRow[]) {
 }
 
 let started = false;
+let inFlight = false;
+
+async function tick() {
+  if (inFlight) {
+    console.warn("refresher: previous cycle still running, skipping tick");
+    return;
+  }
+  inFlight = true;
+  try {
+    await refreshOnce();
+  } catch (e) {
+    console.error("refresh failed", e);
+  } finally {
+    inFlight = false;
+  }
+}
+
 export function startRefresher() {
   if (started) return;
   started = true;
   console.log("refresher: starting");
-  refreshOnce().catch((e) => console.error("initial refresh failed", e));
-  setInterval(
-    () => refreshOnce().catch((e) => console.error("refresh failed", e)),
-    INTERVAL_MS,
-  );
+  tick();
+  setInterval(tick, INTERVAL_MS);
 }

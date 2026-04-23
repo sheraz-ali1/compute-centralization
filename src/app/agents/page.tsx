@@ -92,19 +92,19 @@ export default function AgentsPage() {
           <p>For agents that don&apos;t speak MCP, the same data is open over plain HTTP.</p>
           <ul>
             <li>
-              <code>GET /api/snapshot.json</code> — full current snapshot,{" "}
+              <code>GET /api/snapshot.json</code> ·full current snapshot,{" "}
               <code>{`{ fetched_at, rows: GpuRow[] }`}</code>, cached 60s
             </li>
             <li>
-              <code>GET /api/stream</code> — Server-Sent Events;{" "}
+              <code>GET /api/stream</code> ·Server-Sent Events;{" "}
               <code>snapshot</code> on connect, <code>diff</code> on every
               refresh (~120s)
             </li>
             <li>
-              <code>GET /api/health</code> — liveness + last snapshot age
+              <code>GET /api/health</code> ·liveness + last snapshot age
             </li>
             <li>
-              <code>GET /llms.txt</code> — agent-discoverable site
+              <code>GET /llms.txt</code> ·agent-discoverable site
               description (per <a href="https://llmstxt.org/">llmstxt.org</a>)
             </li>
           </ul>
@@ -140,9 +140,9 @@ export default function AgentsPage() {
             (REST bundles), <strong>Vultr</strong> (REST plans).
           </p>
           <p>
-            Plus 30+ additional providers — Lambda Labs, CoreWeave, AWS,
+            Plus 30+ additional providers ·Lambda Labs, CoreWeave, AWS,
             GCP, Azure, OVH, Scaleway, Crusoe, Hyperstack, Cudo Compute,
-            TensorDock, Paperspace, Fluidstack, and more — sourced via{" "}
+            TensorDock, Paperspace, Fluidstack, and more ·sourced via{" "}
             <a
               href="https://getdeploying.com/gpus"
               target="_blank"

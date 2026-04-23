@@ -80,8 +80,31 @@ function buildServer() {
 }
 
 import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
+import { mcpLimiter, clientIp } from "@/lib/rate-limit";
 
 async function handle(req: Request): Promise<Response> {
+  const ip = clientIp(req);
+  const rl = mcpLimiter.check(ip);
+  if (!rl.allowed) {
+    return new Response(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        error: {
+          code: -32029,
+          message: `Rate limit exceeded. Retry in ${rl.retryAfterSec}s.`,
+        },
+        id: null,
+      }),
+      {
+        status: 429,
+        headers: {
+          "content-type": "application/json",
+          "retry-after": String(rl.retryAfterSec),
+          ...PUBLIC_CORS_HEADERS,
+        },
+      },
+    );
+  }
   const server = buildServer();
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined, // stateless mode

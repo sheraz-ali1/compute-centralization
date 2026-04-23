@@ -48,7 +48,7 @@ export function OrphanedLane() {
     <Section label="Hidden discounts">
       <p className="text-[14px] text-muted-foreground max-w-[44ch]">
         Marketplace listings ≥ 40% cheaper than the managed-cloud median for
-        the same GPU — the supply that doesn&apos;t show up on a sales
+        the same GPU. The supply that doesn&apos;t show up on a sales
         rep&apos;s pricing sheet.
       </p>
       <div className="divide-y divide-border">
