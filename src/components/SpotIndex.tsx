@@ -14,10 +14,11 @@ const HERO_GPUS = [
   "RTX 4090",
 ];
 
-// Marketplace providers report per-host offer_count. Managed clouds always
-// report 1 (it's a tariff, not an offer). Counting them together would
-// misrepresent supply.
-const MARKETPLACE_PROVIDERS = new Set(["vast"]);
+// Enterprise = managed clouds with SLAs (RunPod Secure, Vultr Standard).
+// Vast "verified" is a vetted host but still a marketplace listing, not a
+// managed-SLA tariff — group it with community for the spread comparison.
+const ENTERPRISE_TIERS = new Set(["secure", "standard"]);
+const COMMUNITY_TIERS = new Set(["community", "verified", "unverified"]);
 
 function tierLabel(tier: string) {
   const map: Record<string, string> = {
@@ -39,12 +40,23 @@ function providerLabel(provider: string) {
   return map[provider] ?? provider;
 }
 
-function cheapestRow(rows: GpuRow[]): GpuRow | null {
-  if (rows.length === 0) return null;
-  return rows.reduce((a, b) =>
-    a.price_per_gpu_hour_usd <= b.price_per_gpu_hour_usd ? a : b,
-  );
+function median(xs: number[]) {
+  if (xs.length === 0) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)];
 }
+
+type RowSummary = {
+  model: string;
+  cheapest: GpuRow | null;
+  enterprise: GpuRow | null;
+  median: number | null;
+  spread: number | null;
+  savings: number | null;
+  marketplaceOffers: number;
+  delta: number | null;
+  allRows: GpuRow[];
+};
 
 export function SpotIndex() {
   const { rows } = useSnapshot();
@@ -63,126 +75,216 @@ export function SpotIndex() {
     };
   }, []);
 
-  const summary = HERO_GPUS.map((model) => {
+  const summary: RowSummary[] = HERO_GPUS.map((model) => {
     const matching = rows.filter(
       (r) => r.gpu_model === model && r.available,
     );
-    const cheapest = cheapestRow(matching);
+    const cheapest =
+      matching.length === 0
+        ? null
+        : matching.reduce((a, b) =>
+            a.price_per_gpu_hour_usd <= b.price_per_gpu_hour_usd ? a : b,
+          );
+    const enterpriseRows = matching.filter((r) =>
+      ENTERPRISE_TIERS.has(r.tier),
+    );
+    const enterprise =
+      enterpriseRows.length === 0
+        ? null
+        : enterpriseRows.reduce((a, b) =>
+            a.price_per_gpu_hour_usd <= b.price_per_gpu_hour_usd ? a : b,
+          );
+    const med = median(matching.map((r) => r.price_per_gpu_hour_usd));
+    const cheapestPrice = cheapest?.price_per_gpu_hour_usd ?? null;
+    const enterprisePrice = enterprise?.price_per_gpu_hour_usd ?? null;
+    const spread =
+      cheapestPrice !== null && enterprisePrice !== null && cheapestPrice > 0
+        ? ((enterprisePrice - cheapestPrice) / cheapestPrice) * 100
+        : null;
+    const savings =
+      cheapestPrice !== null && enterprisePrice !== null && enterprisePrice > 0
+        ? (1 - cheapestPrice / enterprisePrice) * 100
+        : null;
     const marketplaceOffers = matching
-      .filter((r) => MARKETPLACE_PROVIDERS.has(r.provider))
+      .filter((r) => COMMUNITY_TIERS.has(r.tier))
       .reduce((s, r) => s + r.offer_count, 0);
-    const providers = new Set(matching.map((r) => r.provider));
-    const delta = deltas[model] ?? null;
+
     return {
       model,
       cheapest,
+      enterprise,
+      median: med,
+      spread,
+      savings,
       marketplaceOffers,
-      providerCount: providers.size,
-      delta,
+      delta: deltas[model] ?? null,
       allRows: matching,
     };
   });
 
   return (
-    <Section label="Spot index">
+    <Section label="Market spread by GPU">
       <div className="divide-y divide-border">
         {summary.map((s) => (
-          <div
-            key={s.model}
-            className="grid grid-cols-12 items-center py-4 gap-3"
-          >
-            <div className="col-span-3 font-sans text-[15px] text-foreground">
-              {s.model}
-            </div>
-            <div className="col-span-3 font-mono tabular text-[22px] text-foreground leading-none">
-              {s.cheapest ? (
-                <Tooltip
-                  content={
-                    <div className="space-y-1 text-[12px] font-mono">
-                      <div className="text-muted-foreground mb-1">
-                        cheapest across providers
-                      </div>
-                      {[...s.allRows]
-                        .sort(
-                          (a, b) =>
-                            a.price_per_gpu_hour_usd -
-                            b.price_per_gpu_hour_usd,
-                        )
-                        .slice(0, 6)
-                        .map((r) => (
-                          <div
-                            key={r.id}
-                            className="flex justify-between gap-4"
-                          >
-                            <span>
-                              {providerLabel(r.provider)}{" "}
-                              <span className="text-muted-foreground">
-                                {tierLabel(r.tier)} ×{r.gpu_count}
-                              </span>
-                            </span>
-                            <span>${r.price_per_gpu_hour_usd.toFixed(2)}</span>
-                          </div>
-                        ))}
-                    </div>
-                  }
-                >
-                  <span className="cursor-help">
-                    <span className="text-muted-foreground text-[14px] mr-0.5">
-                      $
-                    </span>
-                    {s.cheapest.price_per_gpu_hour_usd.toFixed(2)}
-                    <span className="text-muted-foreground text-[12px] ml-1">
-                      /h
-                    </span>
-                  </span>
-                </Tooltip>
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              )}
-            </div>
-            <div
-              className={
-                "col-span-2 font-mono tabular text-[13px] " +
-                (s.delta !== null && s.delta < 0
-                  ? "text-down"
-                  : s.delta !== null && s.delta > 0
-                    ? "text-up"
-                    : "text-muted-foreground")
-              }
-            >
-              {s.delta !== null
-                ? `${s.delta > 0 ? "+" : ""}${s.delta.toFixed(1)}%`
-                : "—"}
-            </div>
-            <div className="col-span-4 text-right text-[13px] text-muted-foreground font-mono">
-              {s.cheapest ? (
-                <>
-                  <span className="text-foreground/85">
-                    {providerLabel(s.cheapest.provider)}
-                  </span>{" "}
-                  <span className="text-muted-foreground">
-                    {tierLabel(s.cheapest.tier)}
-                  </span>
-                  {s.marketplaceOffers > 0 && (
-                    <>
-                      <span className="text-muted-foreground/60 mx-1.5">·</span>
-                      <span>
-                        {s.marketplaceOffers} {s.marketplaceOffers === 1 ? "offer" : "offers"} on Vast
-                      </span>
-                    </>
-                  )}
-                </>
-              ) : (
-                <span className="text-muted-foreground">no data</span>
-              )}
-            </div>
-          </div>
+          <PriceRow key={s.model} s={s} />
         ))}
       </div>
-      <p className="text-[11px] text-muted-foreground/70 font-mono pt-2">
-        Cheapest = lowest single-GPU $/hr across {summary.reduce((s, x) => Math.max(s, x.providerCount), 0)} providers ·
-        Hover a price to see the source ladder · 24h Δ requires ≥24h of history
+      <p className="text-[11px] text-muted-foreground/70 font-mono pt-3 leading-relaxed">
+        Spread = cheapest available offer → cheapest enterprise-tier offer for
+        the same GPU. The wider the bar, the more discount the long tail
+        offers vs. listed enterprise rates. Hover any price for the source
+        ladder. 24h Δ requires ≥24h of accumulated history.
       </p>
     </Section>
+  );
+}
+
+function PriceRow({ s }: { s: RowSummary }) {
+  const hasSpread =
+    s.cheapest && s.enterprise && s.spread !== null && s.savings !== null;
+  return (
+    <div className="grid grid-cols-12 items-center py-5 gap-x-4 gap-y-2">
+      {/* Model + supply */}
+      <div className="col-span-3">
+        <div className="font-sans text-[15px] text-foreground">{s.model}</div>
+        <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
+          {s.marketplaceOffers > 0
+            ? `${s.marketplaceOffers} community ${s.marketplaceOffers === 1 ? "offer" : "offers"}`
+            : "no community supply"}
+        </div>
+      </div>
+
+      {/* Spread bar */}
+      <div className="col-span-6">
+        {hasSpread ? (
+          <SpreadBar
+            cheapest={s.cheapest!.price_per_gpu_hour_usd}
+            median={s.median ?? s.cheapest!.price_per_gpu_hour_usd}
+            enterprise={s.enterprise!.price_per_gpu_hour_usd}
+            cheapestSource={`${providerLabel(s.cheapest!.provider)} ${tierLabel(s.cheapest!.tier)}`}
+            enterpriseSource={`${providerLabel(s.enterprise!.provider)} ${tierLabel(s.enterprise!.tier)}`}
+            allRows={s.allRows}
+          />
+        ) : s.cheapest ? (
+          <div className="font-mono tabular text-[15px] text-foreground">
+            ${s.cheapest.price_per_gpu_hour_usd.toFixed(2)}
+            <span className="text-muted-foreground text-[11px] ml-2">
+              {providerLabel(s.cheapest.provider)} {tierLabel(s.cheapest.tier)}
+              {" · single source"}
+            </span>
+          </div>
+        ) : (
+          <div className="text-muted-foreground text-[14px]">no data</div>
+        )}
+      </div>
+
+      {/* Save % */}
+      <div className="col-span-2 text-right">
+        {s.savings !== null && s.savings > 5 ? (
+          <div className="font-mono tabular text-[18px] text-down leading-none">
+            −{s.savings.toFixed(0)}%
+          </div>
+        ) : (
+          <div className="text-muted-foreground text-[12px] font-mono">—</div>
+        )}
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mt-1">
+          long-tail save
+        </div>
+      </div>
+
+      {/* 24h delta */}
+      <div className="col-span-1 text-right">
+        <div
+          className={
+            "font-mono tabular text-[12px] " +
+            (s.delta !== null && s.delta < 0
+              ? "text-down"
+              : s.delta !== null && s.delta > 0
+                ? "text-up"
+                : "text-muted-foreground")
+          }
+        >
+          {s.delta !== null
+            ? `${s.delta > 0 ? "+" : ""}${s.delta.toFixed(1)}%`
+            : "—"}
+        </div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mt-1">
+          24h
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SpreadBar({
+  cheapest,
+  median,
+  enterprise,
+  cheapestSource,
+  enterpriseSource,
+  allRows,
+}: {
+  cheapest: number;
+  median: number;
+  enterprise: number;
+  cheapestSource: string;
+  enterpriseSource: string;
+  allRows: GpuRow[];
+}) {
+  const range = Math.max(enterprise - cheapest, 0.001);
+  const medianPct = ((median - cheapest) / range) * 100;
+  return (
+    <div className="space-y-1.5">
+      <div className="relative h-[8px]">
+        {/* track */}
+        <div className="absolute inset-y-0 left-0 right-0 rounded-full bg-down/15" />
+        {/* median tick */}
+        <Tooltip
+          content={
+            <div className="font-mono text-[11px] space-y-1 max-w-[280px]">
+              <div className="text-muted-foreground mb-1">price ladder</div>
+              {[...allRows]
+                .sort(
+                  (a, b) =>
+                    a.price_per_gpu_hour_usd - b.price_per_gpu_hour_usd,
+                )
+                .slice(0, 8)
+                .map((r) => (
+                  <div key={r.id} className="flex justify-between gap-4">
+                    <span>
+                      {providerLabel(r.provider)}{" "}
+                      <span className="text-muted-foreground">
+                        {tierLabel(r.tier)} ×{r.gpu_count}
+                      </span>
+                    </span>
+                    <span>${r.price_per_gpu_hour_usd.toFixed(2)}</span>
+                  </div>
+                ))}
+            </div>
+          }
+        >
+          <div
+            className="absolute top-1/2 -translate-y-1/2 size-[14px] rounded-full bg-down border-2 border-background cursor-help"
+            style={{ left: `calc(${medianPct.toFixed(2)}% - 7px)` }}
+          />
+        </Tooltip>
+      </div>
+      <div className="flex justify-between font-mono tabular text-[12px]">
+        <div>
+          <div className="text-foreground">${cheapest.toFixed(2)}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">
+            {cheapestSource}
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-muted-foreground">
+            ${enterprise.toFixed(2)}
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">
+            {enterpriseSource}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

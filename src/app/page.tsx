@@ -1,9 +1,9 @@
 import { Wordmark } from "@/components/Wordmark";
+import { Hero } from "@/components/Hero";
 import { SpotIndex } from "@/components/SpotIndex";
 import { ActivityTicker } from "@/components/ActivityTicker";
-import { DepthChart } from "@/components/DepthChart";
 import { OrphanedLane } from "@/components/OrphanedLane";
-import { AgentAccess } from "@/components/AgentAccess";
+import { DepthChart } from "@/components/DepthChart";
 import { Footer } from "@/components/Footer";
 
 export default function Home() {
@@ -35,24 +35,15 @@ export default function Home() {
 
       <main className="flex-1 px-8">
         <div className="mx-auto w-full max-w-5xl">
-          <section className="pt-20 pb-16 md:pt-28 md:pb-20">
-            <h1 className="font-sans text-[44px] md:text-[60px] leading-[1.05] tracking-[-0.025em] text-foreground max-w-[18ch]">
-              Open price feed for the GPU spot market.
-            </h1>
-            <p className="mt-5 text-[18px] md:text-[20px] text-muted-foreground max-w-[40ch] leading-snug">
-              Live prices, availability, and the long tail of community
-              compute — for agents and the humans they work for.
-            </p>
-          </section>
+          <Hero />
 
           <div className="space-y-16 pb-20">
             <SpotIndex />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-              <DepthChart />
+            <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-12 lg:gap-16">
               <OrphanedLane />
+              <ActivityTicker />
             </div>
-            <ActivityTicker />
-            <AgentAccess />
+            <DepthChart />
           </div>
         </div>
       </main>

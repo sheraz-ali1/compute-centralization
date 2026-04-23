@@ -2,8 +2,11 @@
 import { Section } from "./Section";
 import { useSnapshot } from "@/lib/use-snapshot";
 
-const ENTERPRISE_TIERS = new Set(["secure", "verified", "standard"]);
-const ORPHAN_TIERS = new Set(["community", "unverified"]);
+// Enterprise = managed-cloud tariffs (RunPod Secure, Vultr Standard).
+// Orphan = marketplace tiers including Vast verified (vetted but still
+// peer-listed, not a managed SLA).
+const ENTERPRISE_TIERS = new Set(["secure", "standard"]);
+const ORPHAN_TIERS = new Set(["community", "verified", "unverified"]);
 const HERO_GPUS = ["H100 SXM", "A100 80GB", "RTX 4090", "L40S", "H100 PCIe"];
 
 function median(xs: number[]) {
