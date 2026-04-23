@@ -43,7 +43,7 @@ export function Hero() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-10 w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-x-16 gap-y-14 items-start"
+        className="relative z-10 w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-x-16 gap-y-14 items-center"
       >
         {/* LEFT — copy + actions */}
         <div>
