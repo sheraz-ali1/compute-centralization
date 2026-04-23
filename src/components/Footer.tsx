@@ -53,8 +53,7 @@ export function Footer() {
             , updated daily upstream
           </div>
         </div>
-        <div className="md:text-right space-y-1.5">
-          <div>Open · public benefit</div>
+        <div className="md:text-right">
           <a
             href="https://x.com/sherazx11"
             target="_blank"
