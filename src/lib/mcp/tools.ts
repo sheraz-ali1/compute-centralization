@@ -1,0 +1,96 @@
+import { z } from "zod";
+import { cache } from "@/lib/cache";
+import { sql } from "@/lib/db";
+import type { GpuRow } from "@/lib/schema";
+
+export const listGpusInput = z.object({
+  gpu_model: z.string().optional(),
+  provider: z.array(z.string()).optional(),
+  tier: z.array(z.string()).optional(),
+  max_price_per_gpu_hour: z.number().optional(),
+  min_vram_gb: z.number().optional(),
+  available_only: z.boolean().default(true),
+  region: z.string().optional(),
+  limit: z.number().int().positive().max(500).default(100),
+});
+
+export function listGpus(input: z.infer<typeof listGpusInput>): GpuRow[] {
+  let rows = cache.getRows();
+  if (input.gpu_model) {
+    const q = input.gpu_model.toLowerCase();
+    rows = rows.filter((r) => r.gpu_model.toLowerCase().includes(q));
+  }
+  if (input.provider?.length)
+    rows = rows.filter((r) => input.provider!.includes(r.provider));
+  if (input.tier?.length)
+    rows = rows.filter((r) => input.tier!.includes(r.tier));
+  if (input.max_price_per_gpu_hour !== undefined)
+    rows = rows.filter(
+      (r) => r.price_per_gpu_hour_usd <= input.max_price_per_gpu_hour!,
+    );
+  if (input.min_vram_gb !== undefined)
+    rows = rows.filter((r) => r.vram_gb >= input.min_vram_gb!);
+  if (input.available_only) rows = rows.filter((r) => r.available);
+  if (input.region) {
+    const q = input.region.toLowerCase();
+    rows = rows.filter((r) =>
+      r.regions.some((g) => g.toLowerCase().includes(q)),
+    );
+  }
+  return rows
+    .sort((a, b) => a.price_per_gpu_hour_usd - b.price_per_gpu_hour_usd)
+    .slice(0, input.limit);
+}
+
+export const findCheapestInput = z.object({
+  gpu_model: z.string(),
+  gpu_count: z.number().int().positive().default(1),
+  min_vram_gb: z.number().optional(),
+  tier: z.array(z.string()).optional(),
+  region: z.string().optional(),
+});
+
+export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
+  const matches = listGpus({
+    gpu_model: input.gpu_model,
+    tier: input.tier,
+    min_vram_gb: input.min_vram_gb,
+    region: input.region,
+    available_only: true,
+    limit: 500,
+  }).filter((r) => r.gpu_count === input.gpu_count);
+
+  if (matches.length === 0)
+    return { cheapest: null, alternatives: [], market_context: null };
+
+  const cheapest = matches[0];
+  const alternatives = matches.slice(1, 6);
+
+  // Market context: median + total available + 24h ago
+  const all = listGpus({
+    gpu_model: input.gpu_model,
+    available_only: true,
+    limit: 500,
+  });
+  const prices = all
+    .map((r) => r.price_per_gpu_hour_usd)
+    .sort((a, b) => a - b);
+  const median = prices.length ? prices[Math.floor(prices.length / 2)] : null;
+  const total = all.reduce((sum, r) => sum + r.offer_count, 0);
+
+  const ago = await sql<{ cheapest_price_per_gpu_hour_usd: number }[]>`
+    select cheapest_price_per_gpu_hour_usd from gpu_prices
+    where gpu_model = ${input.gpu_model}
+      and fetched_at <= now() - interval '24 hours'
+    order by fetched_at desc limit 1`;
+
+  return {
+    cheapest,
+    alternatives,
+    market_context: {
+      median_price_per_gpu_hour_usd: median,
+      total_available_count: total,
+      cheapest_24h_ago: ago[0]?.cheapest_price_per_gpu_hour_usd ?? null,
+    },
+  };
+}
