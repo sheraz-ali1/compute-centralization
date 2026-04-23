@@ -154,14 +154,19 @@ function PriceRow({ s }: { s: RowSummary }) {
 
       {/* Save */}
       <div className="col-span-2 text-right">
-        {s.savings !== null && s.savings > 5 ? (
-          <div className="font-mono tabular text-[20px] text-down leading-none">
-            −{s.savings.toFixed(0)}%
-          </div>
-        ) : (
-          <div className="text-muted-foreground text-[14px] font-mono">—</div>
-        )}
-        <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-mono mt-1.5">
+        <div
+          className={
+            "tabular text-[20px] leading-none h-[20px] flex items-baseline justify-end " +
+            (s.savings !== null && s.savings > 5
+              ? "text-down"
+              : "text-muted-foreground/50")
+          }
+        >
+          {s.savings !== null && s.savings > 5
+            ? `−${s.savings.toFixed(0)}%`
+            : "—"}
+        </div>
+        <div className="text-[11px] text-muted-foreground/70 mt-2">
           vs managed
         </div>
       </div>
@@ -170,21 +175,19 @@ function PriceRow({ s }: { s: RowSummary }) {
       <div className="col-span-1 text-right">
         <div
           className={
-            "font-mono tabular text-[12px] " +
+            "tabular text-[20px] leading-none h-[20px] flex items-baseline justify-end " +
             (s.delta !== null && s.delta < 0
               ? "text-down"
               : s.delta !== null && s.delta > 0
                 ? "text-up"
-                : "text-muted-foreground")
+                : "text-muted-foreground/50")
           }
         >
           {s.delta !== null
             ? `${s.delta > 0 ? "+" : ""}${s.delta.toFixed(1)}%`
             : "—"}
         </div>
-        <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-mono mt-1.5">
-          24h
-        </div>
+        <div className="text-[11px] text-muted-foreground/70 mt-2">24h</div>
       </div>
     </div>
   );
