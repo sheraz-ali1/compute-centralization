@@ -56,10 +56,12 @@ export function Footer() {
         <div className="md:text-right space-y-1.5">
           <div>Open · public benefit</div>
           <a
-            href="https://github.com/sheraz-ali1/compute-centralization"
+            href="https://x.com/sherazx11"
+            target="_blank"
+            rel="noopener"
             className="hover:text-foreground transition-colors"
           >
-            github.com/sheraz-ali1/compute-centralization
+            x.com/sherazx11
           </a>
         </div>
       </div>
