@@ -32,8 +32,8 @@ export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/"
-      className={`group inline-flex items-center gap-2.5 ${className}`}
-      aria-label="Compute Grid"
+      className={`group inline-flex items-center gap-2 ${className}`}
+      aria-label="computegrid"
     >
       <motion.svg
         width="22"
@@ -73,9 +73,9 @@ export function Wordmark({ className = "" }: { className?: string }) {
         initial="hidden"
         animate="show"
         variants={labelVariants}
-        className="font-sans text-[18px] font-semibold tracking-[-0.022em] text-foreground leading-none"
+        className="font-sans text-[17px] font-medium tracking-[-0.025em] text-foreground leading-none"
       >
-        Compute Grid
+        computegrid
       </motion.span>
     </Link>
   );
