@@ -1,0 +1,514 @@
+{
+  "offers": [
+    {
+      "id": 33071802,
+      "gpu_name": "GTX 1080",
+      "num_gpus": 1,
+      "dph_base": 0.037333333333333336,
+      "gpu_ram": 8192,
+      "geolocation": "South Korea, KR",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34819827,
+      "gpu_name": "RTX 3060",
+      "num_gpus": 1,
+      "dph_base": 0.05466666666666667,
+      "gpu_ram": 12288,
+      "geolocation": "Thailand, TH",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 30976251,
+      "gpu_name": "GTX 1080",
+      "num_gpus": 2,
+      "dph_base": 0.072,
+      "gpu_ram": 8192,
+      "geolocation": "South Korea, KR",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 31811503,
+      "gpu_name": "RTX 2060",
+      "num_gpus": 2,
+      "dph_base": 0.08,
+      "gpu_ram": 12288,
+      "geolocation": "South Korea, KR",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 29213282,
+      "gpu_name": "RTX 3050",
+      "num_gpus": 2,
+      "dph_base": 0.09333333333333334,
+      "gpu_ram": 6144,
+      "geolocation": "Missouri, US",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34626646,
+      "gpu_name": "RTX 4080S",
+      "num_gpus": 1,
+      "dph_base": 0.12000000000000001,
+      "gpu_ram": 16376,
+      "geolocation": "California, US",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 33009455,
+      "gpu_name": "GTX 1070 Ti",
+      "num_gpus": 4,
+      "dph_base": 0.14933333333333335,
+      "gpu_ram": 8192,
+      "geolocation": "South Korea, KR",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 32614070,
+      "gpu_name": "RTX 5060 Ti",
+      "num_gpus": 2,
+      "dph_base": 0.16666666666666666,
+      "gpu_ram": 16311,
+      "geolocation": "Ontario, CA",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 29204039,
+      "gpu_name": "RTX PRO 4000",
+      "num_gpus": 1,
+      "dph_base": 0.19999999999999998,
+      "gpu_ram": 24467,
+      "geolocation": "Norway, NO",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 9107064,
+      "gpu_name": "RTX 3080",
+      "num_gpus": 1,
+      "dph_base": 0.2506666666666667,
+      "gpu_ram": 12288,
+      "geolocation": "Iceland, IS",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 32029222,
+      "gpu_name": "RTX 4090",
+      "num_gpus": 1,
+      "dph_base": 0.3066666666666667,
+      "gpu_ram": 24564,
+      "geolocation": "Netherlands, NL",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 30897896,
+      "gpu_name": "RTX 5060 Ti",
+      "num_gpus": 2,
+      "dph_base": 0.3413333333333333,
+      "gpu_ram": 16311,
+      "geolocation": "Germany, DE",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 22075596,
+      "gpu_name": "RTX 4090",
+      "num_gpus": 1,
+      "dph_base": 0.39999999999999997,
+      "gpu_ram": 24564,
+      "geolocation": "Iceland, IS",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 31258988,
+      "gpu_name": "RTX PRO 4000",
+      "num_gpus": 2,
+      "dph_base": 0.4426666666666667,
+      "gpu_ram": 24467,
+      "geolocation": "Hungary, HU",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 30690450,
+      "gpu_name": "RTX 5070 Ti",
+      "num_gpus": 4,
+      "dph_base": 0.5866666666666667,
+      "gpu_ram": 16303,
+      "geolocation": "Quebec, CA",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34356847,
+      "gpu_name": "RTX 5090",
+      "num_gpus": 1,
+      "dph_base": 0.6666666666666666,
+      "gpu_ram": 32607,
+      "geolocation": "South Korea, KR",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35283314,
+      "gpu_name": "RTX 4090",
+      "num_gpus": 2,
+      "dph_base": 0.7999999999999999,
+      "gpu_ram": 24564,
+      "geolocation": "Texas, US",
+      "verification": "verified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35356659,
+      "gpu_name": "GTX 1060",
+      "num_gpus": 1,
+      "dph_base": 0.01,
+      "gpu_ram": 6144,
+      "geolocation": "Portugal, PT",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 28140867,
+      "gpu_name": "RTX 3060",
+      "num_gpus": 1,
+      "dph_base": 0.02666666666666667,
+      "gpu_ram": 12288,
+      "geolocation": "South Korea, KR",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 33304820,
+      "gpu_name": "GTX 1660 S",
+      "num_gpus": 1,
+      "dph_base": 0.04,
+      "gpu_ram": 6144,
+      "geolocation": ", CN",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35402972,
+      "gpu_name": "RTX 3070 Ti",
+      "num_gpus": 1,
+      "dph_base": 0.06133333333333332,
+      "gpu_ram": 8192,
+      "geolocation": "Japan, JP",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35425354,
+      "gpu_name": "RTX 5060 Ti",
+      "num_gpus": 1,
+      "dph_base": 0.06666666666666667,
+      "gpu_ram": 16311,
+      "geolocation": "Malaysia, MY",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35023050,
+      "gpu_name": "RTX 4070 Ti",
+      "num_gpus": 1,
+      "dph_base": 0.08,
+      "gpu_ram": 12282,
+      "geolocation": "California, US",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35242988,
+      "gpu_name": "RTX 5070 Ti",
+      "num_gpus": 1,
+      "dph_base": 0.10533333333333333,
+      "gpu_ram": 16303,
+      "geolocation": "Sverdlovsk Oblast, RU",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 33377808,
+      "gpu_name": "Q RTX 4000",
+      "num_gpus": 1,
+      "dph_base": 0.12000000000000001,
+      "gpu_ram": 8192,
+      "geolocation": "Germany, DE",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 32513432,
+      "gpu_name": "RTX 5080",
+      "num_gpus": 1,
+      "dph_base": 0.13773333333333335,
+      "gpu_ram": 16303,
+      "geolocation": "New York, US",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35429407,
+      "gpu_name": "Tesla V100",
+      "num_gpus": 2,
+      "dph_base": 0.17333333333333334,
+      "gpu_ram": 16384,
+      "geolocation": "Utah, US",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34928966,
+      "gpu_name": "Tesla T4",
+      "num_gpus": 1,
+      "dph_base": 0.19999999999999998,
+      "gpu_ram": 15360,
+      "geolocation": "Iowa, US",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35221373,
+      "gpu_name": "Titan RTX",
+      "num_gpus": 2,
+      "dph_base": 0.26666666666666666,
+      "gpu_ram": 24576,
+      "geolocation": "Spain, ES",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 31750634,
+      "gpu_name": "RTX 4000Ada",
+      "num_gpus": 1,
+      "dph_base": 0.32,
+      "gpu_ram": 20475,
+      "geolocation": "Finland, FI",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 33352357,
+      "gpu_name": "RTX 4090",
+      "num_gpus": 1,
+      "dph_base": 0.3586666666666667,
+      "gpu_ram": 23028,
+      "geolocation": "Texas, US",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 27723483,
+      "gpu_name": "RTX 3090",
+      "num_gpus": 4,
+      "dph_base": 0.46933333333333327,
+      "gpu_ram": 24576,
+      "geolocation": "Singapore, SG",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34624424,
+      "gpu_name": "A100 PCIE",
+      "num_gpus": 1,
+      "dph_base": 0.6666666666666666,
+      "gpu_ram": 81920,
+      "geolocation": "Netherlands, NL",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 33823112,
+      "gpu_name": "L40",
+      "num_gpus": 3,
+      "dph_base": 0.8,
+      "gpu_ram": 46068,
+      "geolocation": "Belarus, BY",
+      "verification": "unverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 33056245,
+      "gpu_name": "RTX 3060 Ti",
+      "num_gpus": 1,
+      "dph_base": 0.016,
+      "gpu_ram": 8192,
+      "geolocation": "Mexico, MX",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 31008450,
+      "gpu_name": "RTX 3060 laptop",
+      "num_gpus": 1,
+      "dph_base": 0.04,
+      "gpu_ram": 6144,
+      "geolocation": "Bulgaria, BG",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 16670767,
+      "gpu_name": "RTX A2000",
+      "num_gpus": 2,
+      "dph_base": 0.064,
+      "gpu_ram": 6138,
+      "geolocation": "Japan, JP",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 30408932,
+      "gpu_name": "RTX 3090",
+      "num_gpus": 1,
+      "dph_base": 0.08,
+      "gpu_ram": 24576,
+      "geolocation": "Germany, DE",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 31884039,
+      "gpu_name": "RTX 5060 Ti",
+      "num_gpus": 1,
+      "dph_base": 0.08533333333333333,
+      "gpu_ram": 16311,
+      "geolocation": "Texas, US",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35059504,
+      "gpu_name": "RTX 3060",
+      "num_gpus": 2,
+      "dph_base": 0.112,
+      "gpu_ram": 12288,
+      "geolocation": "California, US",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 35125842,
+      "gpu_name": "RTX 4070",
+      "num_gpus": 2,
+      "dph_base": 0.13333333333333333,
+      "gpu_ram": 12282,
+      "geolocation": "United Kingdom, GB",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34694567,
+      "gpu_name": "RTX PRO 4500",
+      "num_gpus": 1,
+      "dph_base": 0.15333333333333335,
+      "gpu_ram": 32623,
+      "geolocation": "India, IN",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 31884035,
+      "gpu_name": "RTX 5060 Ti",
+      "num_gpus": 2,
+      "dph_base": 0.17066666666666666,
+      "gpu_ram": 16311,
+      "geolocation": "Texas, US",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34347244,
+      "gpu_name": "RTX 3060",
+      "num_gpus": 4,
+      "dph_base": 0.21333333333333335,
+      "gpu_ram": 12288,
+      "geolocation": ", CN",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 18215455,
+      "gpu_name": "RTX 3090",
+      "num_gpus": 2,
+      "dph_base": 0.2533333333333333,
+      "gpu_ram": 24576,
+      "geolocation": "Quebec, CA",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34016595,
+      "gpu_name": "RTX A6000",
+      "num_gpus": 1,
+      "dph_base": 0.28,
+      "gpu_ram": 49140,
+      "geolocation": "Sweden, SE",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 28429750,
+      "gpu_name": "RTX 4090",
+      "num_gpus": 1,
+      "dph_base": 0.3333333333333333,
+      "gpu_ram": 24564,
+      "geolocation": "Iceland, IS",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34238306,
+      "gpu_name": "RTX 4070S",
+      "num_gpus": 4,
+      "dph_base": 0.37333333333333335,
+      "gpu_ram": 12282,
+      "geolocation": "California, US",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 34347245,
+      "gpu_name": "RTX 3060",
+      "num_gpus": 8,
+      "dph_base": 0.4266666666666667,
+      "gpu_ram": 12288,
+      "geolocation": ", CN",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 19583465,
+      "gpu_name": "RTX 4090",
+      "num_gpus": 2,
+      "dph_base": 0.5866666666666667,
+      "gpu_ram": 24564,
+      "geolocation": ", US",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    },
+    {
+      "id": 33062490,
+      "gpu_name": "RTX 5090",
+      "num_gpus": 2,
+      "dph_base": 0.64,
+      "gpu_ram": 32607,
+      "geolocation": "California, US",
+      "verification": "deverified",
+      "bw_nvlink": 0
+    }
+  ]
+}
