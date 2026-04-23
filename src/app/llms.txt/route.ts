@@ -1,16 +1,20 @@
+import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
+
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const base = new URL(req.url).origin;
   const body = `# ComputeGrid
 
-Open price feed for the GPU spot market. Aggregates RunPod, Vast.ai, and Vultr.
+Open price feed for the GPU spot market. Aggregates RunPod, Vast.ai, Vultr,
+and 30+ additional providers via getdeploying.com.
 
 ## Endpoints
 
 - MCP server: ${base}/mcp (streamable HTTP)
 - Snapshot JSON: ${base}/api/snapshot.json
 - Live stream (SSE): ${base}/api/stream
+- Recent events: ${base}/api/events
 - Health: ${base}/api/health
 
 ## MCP tools
@@ -31,6 +35,13 @@ Open price feed for the GPU spot market. Aggregates RunPod, Vast.ai, and Vultr.
 Open. Free to use. Public benefit.
 `;
   return new Response(body, {
-    headers: { "content-type": "text/plain; charset=utf-8" },
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      ...PUBLIC_CORS_HEADERS,
+    },
   });
+}
+
+export async function OPTIONS() {
+  return corsPreflight();
 }

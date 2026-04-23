@@ -79,6 +79,8 @@ function buildServer() {
   return server;
 }
 
+import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
+
 async function handle(req: Request): Promise<Response> {
   const server = buildServer();
   const transport = new WebStandardStreamableHTTPServerTransport({
@@ -87,7 +89,14 @@ async function handle(req: Request): Promise<Response> {
   });
   await server.connect(transport);
   const response = await transport.handleRequest(req);
-  return response;
+  // Layer CORS headers onto the SDK's response
+  const headers = new Headers(response.headers);
+  for (const [k, v] of Object.entries(PUBLIC_CORS_HEADERS)) headers.set(k, v);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 export const dynamic = "force-dynamic";
@@ -100,4 +109,7 @@ export async function POST(req: Request) {
 }
 export async function DELETE(req: Request) {
   return handle(req);
+}
+export async function OPTIONS() {
+  return corsPreflight();
 }

@@ -1,5 +1,6 @@
 import { sseBus } from "@/lib/sse-bus";
 import { cache } from "@/lib/cache";
+import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,6 @@ export async function GET() {
   const stream = new ReadableStream({
     start(controller) {
       const enc = new TextEncoder();
-      // initial snapshot
       controller.enqueue(
         enc.encode(
           `event: snapshot\ndata: ${JSON.stringify({
@@ -19,7 +19,9 @@ export async function GET() {
           })}\n\n`,
         ),
       );
-      unsub = sseBus.subscribe((payload) => controller.enqueue(enc.encode(payload)));
+      unsub = sseBus.subscribe((payload) =>
+        controller.enqueue(enc.encode(payload)),
+      );
       heartbeat = setInterval(
         () => controller.enqueue(enc.encode(": ping\n\n")),
         30_000,
@@ -35,6 +37,11 @@ export async function GET() {
       "content-type": "text/event-stream",
       "cache-control": "no-cache, no-transform",
       connection: "keep-alive",
+      ...PUBLIC_CORS_HEADERS,
     },
   });
+}
+
+export async function OPTIONS() {
+  return corsPreflight();
 }

@@ -3,14 +3,19 @@ import { cache } from "@/lib/cache";
 import { sql } from "@/lib/db";
 import type { GpuRow } from "@/lib/schema";
 
+// Hard caps on string lengths and array sizes to prevent abuse. None of
+// these are real-world limiting for legitimate agent use.
+const STR = z.string().max(256);
+const STR_ARR = z.array(STR).max(50);
+
 export const listGpusInput = z.object({
-  gpu_model: z.string().optional(),
-  provider: z.array(z.string()).optional(),
-  tier: z.array(z.string()).optional(),
-  max_price_per_gpu_hour: z.number().optional(),
-  min_vram_gb: z.number().optional(),
+  gpu_model: STR.optional(),
+  provider: STR_ARR.optional(),
+  tier: STR_ARR.optional(),
+  max_price_per_gpu_hour: z.number().nonnegative().max(10000).optional(),
+  min_vram_gb: z.number().nonnegative().max(10000).optional(),
   available_only: z.boolean().default(true),
-  region: z.string().optional(),
+  region: STR.optional(),
   limit: z.number().int().positive().max(500).default(100),
 });
 
@@ -43,11 +48,11 @@ export function listGpus(input: z.infer<typeof listGpusInput>): GpuRow[] {
 }
 
 export const findCheapestInput = z.object({
-  gpu_model: z.string(),
-  gpu_count: z.number().int().positive().default(1),
-  min_vram_gb: z.number().optional(),
-  tier: z.array(z.string()).optional(),
-  region: z.string().optional(),
+  gpu_model: STR,
+  gpu_count: z.number().int().positive().max(64).default(1),
+  min_vram_gb: z.number().nonnegative().max(10000).optional(),
+  tier: STR_ARR.optional(),
+  region: STR.optional(),
 });
 
 export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
