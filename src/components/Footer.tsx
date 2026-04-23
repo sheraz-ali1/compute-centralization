@@ -58,9 +58,18 @@ export function Footer() {
             href="https://x.com/sherazx11"
             target="_blank"
             rel="noopener"
-            className="hover:text-foreground transition-colors"
+            aria-label="Follow @sherazx11 on X"
+            className="inline-flex items-center justify-center size-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06] transition-colors"
           >
-            x.com/sherazx11
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden
+            >
+              <path d="M18.244 2H21.5l-7.5 8.567L22.99 22h-6.79l-5.32-6.962L4.8 22H1.54l8.02-9.165L1.01 2h6.96l4.81 6.36L18.244 2zm-2.38 18h1.876L8.226 4H6.21l9.654 16z" />
+            </svg>
           </a>
         </div>
       </div>
