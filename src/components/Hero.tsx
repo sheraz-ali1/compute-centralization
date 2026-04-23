@@ -38,22 +38,15 @@ export function Hero() {
   };
 
   return (
-    <section className="relative min-h-svh flex items-center -mx-8 px-6 sm:px-8">
+    <section className="relative min-h-svh flex flex-col -mx-8 px-6 sm:px-8">
       <motion.div
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-10 w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-x-16 gap-y-14 items-center"
+        className="relative z-10 flex-1 w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-x-16 gap-y-14 items-center pt-24 pb-16"
       >
         {/* LEFT — copy + actions */}
         <div>
-          <motion.div
-            variants={item}
-            className="text-[13px] text-muted-foreground mb-4"
-          >
-            MCP server for GPU compute
-          </motion.div>
-
           <motion.h1
             variants={item}
             className="font-sans font-light text-[40px] sm:text-[48px] md:text-[56px] leading-[1.04] tracking-[-0.03em] text-foreground text-balance"
@@ -119,6 +112,36 @@ export function Hero() {
           <AgentQuery />
         </motion.div>
       </motion.div>
+
+      {/* Scroll affordance */}
+      <motion.a
+        href="#live-market"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.6, duration: 1, ease: "easeOut" }}
+        className="relative z-10 mb-8 mx-auto group flex flex-col items-center gap-2 text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+        aria-label="scroll to live market"
+      >
+        <span>Live market below</span>
+        <motion.span
+          animate={{ y: [0, 4, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 5v14M5 12l7 7 7-7" />
+          </svg>
+        </motion.span>
+      </motion.a>
     </section>
   );
 }
