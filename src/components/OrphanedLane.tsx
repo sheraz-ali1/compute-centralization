@@ -45,10 +45,11 @@ export function OrphanedLane() {
   }[];
 
   return (
-    <Section label="Orphaned lane">
+    <Section label="Hidden discounts">
       <p className="text-[14px] text-muted-foreground max-w-[44ch]">
-        Community listings ≥ 40% below the enterprise-tier median. The
-        compute that doesn&apos;t show up on a sales rep&apos;s pricing sheet.
+        Marketplace listings ≥ 40% cheaper than the managed-cloud median for
+        the same GPU — the supply that doesn&apos;t show up on a sales
+        rep&apos;s pricing sheet.
       </p>
       <div className="divide-y divide-border">
         {items.length === 0 && (

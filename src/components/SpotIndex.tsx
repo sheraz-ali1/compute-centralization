@@ -123,17 +123,18 @@ export function SpotIndex() {
   });
 
   return (
-    <Section label="Market spread by GPU">
+    <Section label="Price range by GPU">
       <div className="divide-y divide-border">
         {summary.map((s) => (
           <PriceRow key={s.model} s={s} />
         ))}
       </div>
       <p className="text-[11px] text-muted-foreground/70 font-mono pt-3 leading-relaxed">
-        Spread = cheapest available offer → cheapest enterprise-tier offer for
-        the same GPU. The wider the bar, the more discount the long tail
-        offers vs. listed enterprise rates. Hover any price for the source
-        ladder. 24h Δ requires ≥24h of accumulated history.
+        Range = cheapest marketplace offer (Vast.ai, RunPod Community) → cheapest
+        managed-cloud offer (RunPod Secure, Vultr) for the same GPU. The wider
+        the bar, the larger the discount the marketplace offers vs. managed
+        rates. Hover the median dot for the full source ladder. 24h Δ requires
+        ≥24h of accumulated history.
       </p>
     </Section>
   );
@@ -188,7 +189,7 @@ function PriceRow({ s }: { s: RowSummary }) {
           <div className="text-muted-foreground text-[12px] font-mono">—</div>
         )}
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mt-1">
-          long-tail save
+          vs managed
         </div>
       </div>
 

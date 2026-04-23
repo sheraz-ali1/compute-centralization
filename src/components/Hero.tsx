@@ -69,8 +69,8 @@ export function Hero() {
         Open price feed for the GPU spot market.
       </h1>
       <p className="mt-5 text-[18px] md:text-[20px] text-muted-foreground max-w-[44ch] leading-snug">
-        Live prices, availability, and the long tail of community compute —
-        for agents and the humans they work for.
+        Live prices and availability across cloud and marketplace
+        providers — for agents and the humans they work for.
       </p>
 
       {/* Dynamic insight */}
@@ -78,11 +78,16 @@ export function Hero() {
         <div className="mt-8 inline-flex flex-wrap items-baseline gap-x-2 gap-y-1 font-sans text-[15px] md:text-[16px] text-foreground">
           <span className="text-muted-foreground">Right now:</span>
           <span>
-            save <span className="text-down font-medium">{bestSavings.savingsPct.toFixed(0)}%</span> on a
+            <span className="text-foreground">{bestSavings.model}</span> on
+            the marketplace is{" "}
+            <span className="text-down font-medium">
+              {bestSavings.savingsPct.toFixed(0)}% cheaper
+            </span>{" "}
+            than the managed-cloud price
           </span>
-          <span className="text-foreground">{bestSavings.model}</span>
           <span className="text-muted-foreground">
-            (${bestSavings.cheapest.toFixed(2)} community vs ${bestSavings.enterprise.toFixed(2)} enterprise)
+            (${bestSavings.cheapest.toFixed(2)} vs $
+            {bestSavings.enterprise.toFixed(2)}/hr)
           </span>
         </div>
       )}
