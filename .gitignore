@@ -36,3 +36,6 @@ coverage/
 # misc
 *.tsbuildinfo
 next-env.d.ts
+
+# worktrees
+.worktrees/
