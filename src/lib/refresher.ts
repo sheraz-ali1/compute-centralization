@@ -58,7 +58,7 @@ export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[]
   await Promise.all(
     results.map((r) =>
       sql`insert into snapshots (fetched_at, provider, rows_count, payload, fetch_ms, ok)
-          values (now(), ${r.provider}, ${r.rows.length}, ${sql.json(r.rows)}, ${r.ms}, ${r.ok})`.catch(
+          values (now(), ${r.provider}, ${r.rows.length}, ${sql.json(r.rows as unknown as Parameters<typeof sql.json>[0])}, ${r.ms}, ${r.ok})`.catch(
         (e) => console.error("snapshot insert", e),
       ),
     ),

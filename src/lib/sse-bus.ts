@@ -11,4 +11,7 @@ class SseBus {
     for (const fn of this.listeners) fn(payload);
   }
 }
-export const sseBus = new SseBus();
+// Pin singleton on globalThis so it survives across module instances
+// (Next dev mode / Turbopack may otherwise compile this module twice).
+const g = globalThis as unknown as { __computegridSseBus?: SseBus };
+export const sseBus = g.__computegridSseBus ?? (g.__computegridSseBus = new SseBus());

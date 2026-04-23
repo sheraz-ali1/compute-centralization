@@ -61,4 +61,7 @@ class Cache {
   }
 }
 
-export const cache = new Cache();
+// Pin singleton on globalThis so it survives across module instances
+// (Next dev mode / Turbopack may otherwise compile this module twice).
+const g = globalThis as unknown as { __computegridCache?: Cache };
+export const cache = g.__computegridCache ?? (g.__computegridCache = new Cache());
