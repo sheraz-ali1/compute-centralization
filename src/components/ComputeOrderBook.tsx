@@ -123,7 +123,7 @@ export function ComputeOrderBook() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={visible}
-                margin={{ top: 8, right: 12, left: 0, bottom: 4 }}
+                margin={{ top: 28, right: 12, left: 0, bottom: 4 }}
               >
                 <defs>
                   <linearGradient id="depthFill" x1="0" y1="0" x2="0" y2="1">
@@ -185,13 +185,15 @@ export function ComputeOrderBook() {
                 <ReferenceLine
                   x={stats!.median}
                   stroke="var(--muted-foreground)"
-                  strokeOpacity={0.35}
+                  strokeOpacity={0.4}
                   strokeDasharray="3 3"
                   label={{
-                    value: "median",
-                    position: "top",
+                    value: `median $${stats!.median.toFixed(2)}`,
+                    position: "insideTopRight",
+                    offset: -8,
                     fill: "var(--muted-foreground)",
                     fontSize: 10,
+                    dx: -6,
                   }}
                 />
                 <Area
