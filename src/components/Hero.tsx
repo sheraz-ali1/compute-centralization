@@ -59,7 +59,7 @@ export function Hero() {
             className="mt-6 text-[16px] md:text-[17px] text-muted-foreground max-w-[46ch] leading-[1.6] text-balance"
           >
             An open index of the GPU spot market, built so that agents can
-            help you optimally provision the compute you need.{" "}
+            help you provision the compute you need.{" "}
             <span className="text-muted-foreground/65">
               Inspired by CS153 and AMP PBC.
             </span>
