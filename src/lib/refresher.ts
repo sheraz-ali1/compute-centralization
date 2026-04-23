@@ -1,15 +1,21 @@
 import { fetchRunpod } from "@/scrapers/runpod";
 import { fetchVast } from "@/scrapers/vast";
 import { fetchVultr } from "@/scrapers/vultr";
+import { fetchGetdeploying } from "@/scrapers/getdeploying";
 import { cache, diffSnapshots } from "@/lib/cache";
 import { sseBus } from "@/lib/sse-bus";
 import { sql } from "@/lib/db";
-import type { GpuRow, Provider } from "@/lib/schema";
+import type { GpuRow } from "@/lib/schema";
 
 const INTERVAL_MS = 120_000;
 
+// Source identifiers — the *source*, not necessarily the provider name on
+// the row. RunPod/Vast/Vultr are direct integrations; getdeploying is a
+// daily-updated aggregator that fills in 30+ additional providers.
+type SourceId = "runpod" | "vast" | "vultr" | "getdeploying";
+
 type Result = {
-  provider: Provider;
+  source: SourceId;
   rows: GpuRow[];
   ms: number;
   ok: boolean;
@@ -17,17 +23,28 @@ type Result = {
 };
 
 async function runOne(
-  provider: Provider,
+  source: SourceId,
   fn: () => Promise<GpuRow[]>,
 ): Promise<Result> {
   const t0 = Date.now();
   try {
     const rows = await fn();
-    return { provider, rows, ms: Date.now() - t0, ok: true };
+    return { source, rows, ms: Date.now() - t0, ok: true };
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e);
-    return { provider, rows: [], ms: Date.now() - t0, ok: false, error: message };
+    return { source, rows: [], ms: Date.now() - t0, ok: false, error: message };
   }
+}
+
+// Map a row back to the source that fetched it. Direct providers map
+// trivially by `row.provider`; aggregator-sourced rows are identified by
+// the metadata.source field set at parse time.
+function rowSource(r: GpuRow): SourceId | null {
+  if (r.provider === "runpod") return "runpod";
+  if (r.provider === "vast") return "vast";
+  if (r.provider === "vultr") return "vultr";
+  if (r.metadata?.source === "getdeploying") return "getdeploying";
+  return null;
 }
 
 export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[] }> {
@@ -35,9 +52,10 @@ export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[]
     runOne("runpod", fetchRunpod),
     runOne("vast", fetchVast),
     runOne("vultr", fetchVultr),
+    runOne("getdeploying", fetchGetdeploying),
   ]);
 
-  // Per-provider isolation: keep prior rows for failed providers
+  // Per-source isolation: keep prior rows for failed sources
   const prevRows = cache.getRows();
   const allRows: GpuRow[] = [];
   for (const r of results) {
@@ -45,9 +63,9 @@ export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[]
       allRows.push(...r.rows);
     } else {
       console.warn(
-        `refresher: ${r.provider} failed (${r.error}), retaining stale rows`,
+        `refresher: ${r.source} failed (${r.error}), retaining stale rows`,
       );
-      allRows.push(...prevRows.filter((x) => x.provider === r.provider));
+      allRows.push(...prevRows.filter((x) => rowSource(x) === r.source));
     }
   }
 
@@ -65,7 +83,7 @@ export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[]
   await Promise.all(
     results.map((r) =>
       sql`insert into snapshots (fetched_at, provider, rows_count, payload, fetch_ms, ok)
-          values (now(), ${r.provider}, ${r.rows.length}, ${sql.json(r.rows as unknown as Parameters<typeof sql.json>[0])}, ${r.ms}, ${r.ok})`.catch(
+          values (now(), ${r.source}, ${r.rows.length}, ${sql.json(r.rows as unknown as Parameters<typeof sql.json>[0])}, ${r.ms}, ${r.ok})`.catch(
         (e) => console.error("snapshot insert", e),
       ),
     ),

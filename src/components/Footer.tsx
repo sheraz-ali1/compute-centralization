@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 
 export function Footer() {
   const [age, setAge] = useState<number | null>(null);
-  const [rows, setRows] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -11,13 +10,13 @@ export function Footer() {
       try {
         const r = await fetch("/api/health").then((r) => r.json());
         if (cancelled) return;
-        setAge(typeof r?.last_snapshot_age_s === "number" ? r.last_snapshot_age_s : null);
-        setRows(typeof r?.rows === "number" ? r.rows : null);
+        setAge(
+          typeof r?.last_snapshot_age_s === "number"
+            ? r.last_snapshot_age_s
+            : null,
+        );
       } catch {
-        if (!cancelled) {
-          setAge(null);
-          setRows(null);
-        }
+        if (!cancelled) setAge(null);
       }
     };
     tick();
@@ -29,21 +28,41 @@ export function Footer() {
   }, []);
 
   return (
-    <footer className="px-8 py-6 border-t border-border flex items-center justify-between text-[12px] text-muted-foreground font-mono">
-      <span>
-        Open · public benefit ·{" "}
-        <a
-          href="https://github.com/sheraz-ali1/compute-centralization"
-          className="hover:text-foreground transition-colors"
-        >
-          github.com/sheraz-ali1/compute-centralization
-        </a>
-      </span>
-      <span className="flex items-center gap-2">
-        <span className="size-1.5 rounded-full bg-down animate-pulse" />
-        {rows !== null ? `${rows.toLocaleString()} listings · ` : ""}
-        {age !== null ? `refreshed ${Math.round(age)}s ago` : "connecting…"}
-      </span>
+    <footer className="border-t border-border/60 px-8 py-8">
+      <div className="mx-auto max-w-4xl flex flex-col md:flex-row md:items-start md:justify-between gap-4 text-[12px] text-muted-foreground font-mono">
+        <div className="space-y-1.5">
+          <div>
+            <span className="text-foreground/85">Direct integrations:</span>{" "}
+            RunPod · Vast.ai · Vultr —{" "}
+            {age !== null
+              ? `refreshed ${Math.round(age)}s ago`
+              : "connecting…"}
+          </div>
+          <div>
+            <span className="text-foreground/85">Aggregator:</span> 30+
+            additional providers (Lambda, CoreWeave, Paperspace, AWS, GCP,
+            Azure, OVH, Scaleway, …) via{" "}
+            <a
+              href="https://getdeploying.com/gpus"
+              target="_blank"
+              rel="noopener"
+              className="hover:text-foreground transition-colors underline-offset-2 hover:underline"
+            >
+              getdeploying.com
+            </a>
+            , updated daily upstream
+          </div>
+        </div>
+        <div className="md:text-right space-y-1.5">
+          <div>Open · public benefit</div>
+          <a
+            href="https://github.com/sheraz-ali1/compute-centralization"
+            className="hover:text-foreground transition-colors"
+          >
+            github.com/sheraz-ali1/compute-centralization
+          </a>
+        </div>
+      </div>
     </footer>
   );
 }

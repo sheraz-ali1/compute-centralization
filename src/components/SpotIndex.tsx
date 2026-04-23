@@ -4,6 +4,7 @@ import { useSnapshot } from "@/lib/use-snapshot";
 import { useEffect, useState } from "react";
 import type { GpuRow } from "@/lib/schema";
 import { Tooltip } from "@/components/ui/tooltip";
+import { providerLabel, tierLabel } from "@/lib/provider-labels";
 
 const HERO_GPUS = [
   "H100 SXM",
@@ -14,31 +15,10 @@ const HERO_GPUS = [
   "RTX 4090",
 ];
 
-// Enterprise = managed clouds with SLAs (RunPod Secure, Vultr Standard).
-// Vast "verified" is a vetted host but still a marketplace listing, not a
-// managed-SLA tariff — group it with community for the spread comparison.
+// Enterprise = managed-cloud tariffs (RunPod Secure, Vultr/Lambda/AWS standard).
+// Marketplace = peer-listed supply (Vast verified/unverified, RunPod Community).
 const ENTERPRISE_TIERS = new Set(["secure", "standard"]);
 const COMMUNITY_TIERS = new Set(["community", "verified", "unverified"]);
-
-function tierLabel(tier: string) {
-  const map: Record<string, string> = {
-    secure: "Secure",
-    community: "Community",
-    verified: "Verified",
-    unverified: "Unverified",
-    standard: "Standard",
-  };
-  return map[tier] ?? tier;
-}
-
-function providerLabel(provider: string) {
-  const map: Record<string, string> = {
-    runpod: "RunPod",
-    vast: "Vast.ai",
-    vultr: "Vultr",
-  };
-  return map[provider] ?? provider;
-}
 
 function median(xs: number[]) {
   if (xs.length === 0) return null;
@@ -51,7 +31,6 @@ type RowSummary = {
   cheapest: GpuRow | null;
   enterprise: GpuRow | null;
   median: number | null;
-  spread: number | null;
   savings: number | null;
   marketplaceOffers: number;
   delta: number | null;
@@ -97,10 +76,6 @@ export function SpotIndex() {
     const med = median(matching.map((r) => r.price_per_gpu_hour_usd));
     const cheapestPrice = cheapest?.price_per_gpu_hour_usd ?? null;
     const enterprisePrice = enterprise?.price_per_gpu_hour_usd ?? null;
-    const spread =
-      cheapestPrice !== null && enterprisePrice !== null && cheapestPrice > 0
-        ? ((enterprisePrice - cheapestPrice) / cheapestPrice) * 100
-        : null;
     const savings =
       cheapestPrice !== null && enterprisePrice !== null && enterprisePrice > 0
         ? (1 - cheapestPrice / enterprisePrice) * 100
@@ -114,7 +89,6 @@ export function SpotIndex() {
       cheapest,
       enterprise,
       median: med,
-      spread,
       savings,
       marketplaceOffers,
       delta: deltas[model] ?? null,
@@ -122,56 +96,66 @@ export function SpotIndex() {
     };
   });
 
+  const totalProviders = new Set(rows.map((r) => r.provider)).size;
+
   return (
-    <Section label="Price range by GPU">
-      <div className="divide-y divide-border">
+    <div>
+      <div className="flex items-baseline justify-between mb-8">
+        <h2 className="font-sans text-[24px] tracking-[-0.015em] text-foreground">
+          Live market
+        </h2>
+        <div className="text-[12px] text-muted-foreground font-mono">
+          {totalProviders} providers · {rows.filter((r) => r.available).length}{" "}
+          tracked SKUs
+        </div>
+      </div>
+      <div className="divide-y divide-border/70">
         {summary.map((s) => (
           <PriceRow key={s.model} s={s} />
         ))}
       </div>
-      <p className="text-[11px] text-muted-foreground/70 font-mono pt-3 leading-relaxed">
-        Range = cheapest marketplace offer (Vast.ai, RunPod Community) → cheapest
-        managed-cloud offer (RunPod Secure, Vultr) for the same GPU. The wider
-        the bar, the larger the discount the marketplace offers vs. managed
-        rates. Hover the median dot for the full source ladder. 24h Δ requires
-        ≥24h of accumulated history.
+      <p className="text-[11px] text-muted-foreground/70 font-mono pt-5 leading-relaxed">
+        Range = cheapest available offer → cheapest managed-cloud (RunPod Secure,
+        Vultr, Lambda, AWS, etc.) for the same GPU. Hover the median dot for
+        the full price ladder across all providers.
       </p>
-    </Section>
+    </div>
   );
 }
 
 function PriceRow({ s }: { s: RowSummary }) {
-  const hasSpread =
-    s.cheapest && s.enterprise && s.spread !== null && s.savings !== null;
+  const hasSpread = s.cheapest && s.enterprise && s.savings !== null;
   return (
-    <div className="grid grid-cols-12 items-center py-5 gap-x-4 gap-y-2">
+    <div className="grid grid-cols-12 items-center py-6 gap-x-5 gap-y-2">
       {/* Model + supply */}
       <div className="col-span-3">
-        <div className="font-sans text-[15px] text-foreground">{s.model}</div>
-        <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
-          {s.marketplaceOffers > 0
-            ? `${s.marketplaceOffers} community ${s.marketplaceOffers === 1 ? "offer" : "offers"}`
-            : "no community supply"}
+        <div className="font-sans text-[16px] text-foreground tracking-[-0.01em]">
+          {s.model}
+        </div>
+        <div className="text-[11px] font-mono text-muted-foreground mt-1">
+          {s.allRows.length === 0
+            ? "no listings"
+            : `${s.allRows.length} listings · ${new Set(s.allRows.map((r) => r.provider)).size} providers`}
         </div>
       </div>
 
-      {/* Spread bar */}
+      {/* Spread */}
       <div className="col-span-6">
         {hasSpread ? (
           <SpreadBar
             cheapest={s.cheapest!.price_per_gpu_hour_usd}
             median={s.median ?? s.cheapest!.price_per_gpu_hour_usd}
             enterprise={s.enterprise!.price_per_gpu_hour_usd}
-            cheapestSource={`${providerLabel(s.cheapest!.provider)} ${tierLabel(s.cheapest!.tier)}`}
-            enterpriseSource={`${providerLabel(s.enterprise!.provider)} ${tierLabel(s.enterprise!.tier)}`}
+            cheapestProvider={providerLabel(s.cheapest!.provider)}
+            cheapestTier={tierLabel(s.cheapest!.tier)}
+            enterpriseProvider={providerLabel(s.enterprise!.provider)}
             allRows={s.allRows}
           />
         ) : s.cheapest ? (
           <div className="font-mono tabular text-[15px] text-foreground">
             ${s.cheapest.price_per_gpu_hour_usd.toFixed(2)}
             <span className="text-muted-foreground text-[11px] ml-2">
-              {providerLabel(s.cheapest.provider)} {tierLabel(s.cheapest.tier)}
-              {" · single source"}
+              {providerLabel(s.cheapest.provider)} · single source
             </span>
           </div>
         ) : (
@@ -179,16 +163,16 @@ function PriceRow({ s }: { s: RowSummary }) {
         )}
       </div>
 
-      {/* Save % */}
+      {/* Save */}
       <div className="col-span-2 text-right">
         {s.savings !== null && s.savings > 5 ? (
-          <div className="font-mono tabular text-[18px] text-down leading-none">
+          <div className="font-mono tabular text-[20px] text-down leading-none">
             −{s.savings.toFixed(0)}%
           </div>
         ) : (
-          <div className="text-muted-foreground text-[12px] font-mono">—</div>
+          <div className="text-muted-foreground text-[14px] font-mono">—</div>
         )}
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mt-1">
+        <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-mono mt-1.5">
           vs managed
         </div>
       </div>
@@ -209,7 +193,7 @@ function PriceRow({ s }: { s: RowSummary }) {
             ? `${s.delta > 0 ? "+" : ""}${s.delta.toFixed(1)}%`
             : "—"}
         </div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-mono mt-1">
+        <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-mono mt-1.5">
           24h
         </div>
       </div>
@@ -221,41 +205,45 @@ function SpreadBar({
   cheapest,
   median,
   enterprise,
-  cheapestSource,
-  enterpriseSource,
+  cheapestProvider,
+  cheapestTier,
+  enterpriseProvider,
   allRows,
 }: {
   cheapest: number;
   median: number;
   enterprise: number;
-  cheapestSource: string;
-  enterpriseSource: string;
+  cheapestProvider: string;
+  cheapestTier: string;
+  enterpriseProvider: string;
   allRows: GpuRow[];
 }) {
   const range = Math.max(enterprise - cheapest, 0.001);
   const medianPct = ((median - cheapest) / range) * 100;
   return (
-    <div className="space-y-1.5">
-      <div className="relative h-[8px]">
-        {/* track */}
+    <div className="space-y-2">
+      <div className="relative h-[5px]">
         <div className="absolute inset-y-0 left-0 right-0 rounded-full bg-down/15" />
-        {/* median tick */}
         <Tooltip
           content={
-            <div className="font-mono text-[11px] space-y-1 max-w-[280px]">
-              <div className="text-muted-foreground mb-1">price ladder</div>
+            <div className="font-mono text-[11px] space-y-1 max-w-[300px]">
+              <div className="text-muted-foreground mb-1">Price ladder</div>
               {[...allRows]
                 .sort(
                   (a, b) =>
                     a.price_per_gpu_hour_usd - b.price_per_gpu_hour_usd,
                 )
-                .slice(0, 8)
+                .slice(0, 10)
                 .map((r) => (
-                  <div key={r.id} className="flex justify-between gap-4">
-                    <span>
+                  <div
+                    key={r.id}
+                    className="flex justify-between gap-4"
+                  >
+                    <span className="truncate">
                       {providerLabel(r.provider)}{" "}
                       <span className="text-muted-foreground">
                         {tierLabel(r.tier)} ×{r.gpu_count}
+                        {r.metadata?.source === "getdeploying" ? " (via getdeploying)" : ""}
                       </span>
                     </span>
                     <span>${r.price_per_gpu_hour_usd.toFixed(2)}</span>
@@ -265,24 +253,22 @@ function SpreadBar({
           }
         >
           <div
-            className="absolute top-1/2 -translate-y-1/2 size-[14px] rounded-full bg-down border-2 border-background cursor-help"
-            style={{ left: `calc(${medianPct.toFixed(2)}% - 7px)` }}
+            className="absolute top-1/2 -translate-y-1/2 size-[12px] rounded-full bg-down border-[2.5px] border-background cursor-help"
+            style={{ left: `calc(${medianPct.toFixed(2)}% - 6px)` }}
           />
         </Tooltip>
       </div>
       <div className="flex justify-between font-mono tabular text-[12px]">
         <div>
           <div className="text-foreground">${cheapest.toFixed(2)}</div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">
-            {cheapestSource}
+          <div className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[160px]">
+            {cheapestProvider} · {cheapestTier}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-muted-foreground">
-            ${enterprise.toFixed(2)}
-          </div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">
-            {enterpriseSource}
+          <div className="text-muted-foreground">${enterprise.toFixed(2)}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[160px]">
+            {enterpriseProvider} managed
           </div>
         </div>
       </div>

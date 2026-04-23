@@ -1,7 +1,18 @@
 import { z } from "zod";
 
-export const ProviderSchema = z.enum(["runpod", "vast", "vultr"]);
-export const TierSchema = z.enum(["secure", "community", "verified", "unverified", "standard"]);
+// Direct-integration providers we own end-to-end (no markup, no aggregator).
+export const DirectProviderSchema = z.enum(["runpod", "vast", "vultr"]);
+// All providers, including those sourced via aggregators like getdeploying.
+// Kept as a string to allow the long tail of cloud providers without an
+// enum churn every time we add one.
+export const ProviderSchema = z.string().min(1);
+export const TierSchema = z.enum([
+  "secure",
+  "community",
+  "verified",
+  "unverified",
+  "standard",
+]);
 
 export const GpuRowSchema = z.object({
   id: z.string(),
