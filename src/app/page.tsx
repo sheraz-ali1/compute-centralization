@@ -2,6 +2,7 @@ import { Wordmark } from "@/components/Wordmark";
 import { Hero } from "@/components/Hero";
 import { SpotIndex } from "@/components/SpotIndex";
 import { ProviderHeatmap } from "@/components/ProviderHeatmap";
+import { ComputeOrderBook } from "@/components/ComputeOrderBook";
 import { AgentScenarios } from "@/components/AgentScenarios";
 import { Footer } from "@/components/Footer";
 import { AudienceToggle } from "@/components/AudienceToggle";
@@ -27,6 +28,9 @@ export default function Home() {
           </div>
           <div className="mx-auto w-full max-w-6xl">
             <ProviderHeatmap />
+          </div>
+          <div className="mx-auto w-full max-w-4xl">
+            <ComputeOrderBook />
           </div>
           <div className="mx-auto w-full max-w-4xl">
             <AgentScenarios />

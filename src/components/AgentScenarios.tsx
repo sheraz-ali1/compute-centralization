@@ -133,12 +133,12 @@ export function AgentScenarios() {
       <header className="flex items-baseline justify-between mb-10">
         <div>
           <h2 className="font-sans text-[24px] tracking-[-0.018em] text-foreground">
-            Real agent jobs, priced live.
+            What a workload costs, today.
           </h2>
           <p className="mt-2 text-[14px] text-muted-foreground max-w-[58ch] leading-snug">
-            Every dollar below is computed from current listings across the
-            tracked providers. Pick a tier, see what an agent would
-            actually pay.
+            Every dollar below is the live cheapest across the providers
+            we track, computed from current listings. Pick a tier, see what
+            it would cost to run.
           </p>
         </div>
       </header>

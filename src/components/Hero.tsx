@@ -63,10 +63,10 @@ export function Hero() {
 
           <motion.p
             variants={item}
-            className="mt-6 text-[16px] md:text-[17px] text-muted-foreground max-w-[44ch] leading-[1.6] text-balance"
+            className="mt-6 text-[16px] md:text-[17px] text-muted-foreground max-w-[46ch] leading-[1.6] text-balance"
           >
-            An open index of the GPU spot market, so agents can buy
-            compute as freely as they make HTTP calls.
+            An open index of the GPU spot market, built so that one day
+            agents can buy compute on their own.
           </motion.p>
 
           <motion.div variants={item} className="mt-9 flex flex-wrap items-center gap-3">
