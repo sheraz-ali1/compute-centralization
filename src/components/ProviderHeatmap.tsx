@@ -118,18 +118,16 @@ export function ProviderHeatmap() {
         <table className="w-full border-collapse text-[12.5px] tabular">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 bg-background px-4 py-3 text-left font-normal text-[11.5px] text-muted-foreground/80 border-b border-border min-w-[140px]">
+              <th className="sticky left-0 z-10 bg-background px-5 h-12 text-left font-normal text-[11px] text-muted-foreground/75 border-b border-border min-w-[150px]">
                 GPU
               </th>
               {providers.map((p) => (
                 <th
                   key={p}
-                  className="px-2 py-3 text-left font-normal text-[10.5px] text-muted-foreground/80 border-b border-border whitespace-nowrap"
+                  className="px-3 h-12 text-right font-normal text-[10.5px] text-muted-foreground/75 border-b border-border whitespace-nowrap min-w-[78px]"
                   title={providerLabel(p)}
                 >
-                  <div className="truncate max-w-[80px]">
-                    {providerLabel(p)}
-                  </div>
+                  <div className="truncate">{providerLabel(p)}</div>
                 </th>
               ))}
             </tr>
@@ -139,10 +137,13 @@ export function ProviderHeatmap() {
               const stats = rowStats.get(gpu);
               if (!stats) return null;
               return (
-                <tr key={gpu} className="border-b border-border/60 last:border-b-0">
-                  <th className="sticky left-0 z-10 bg-background px-4 py-3 text-left font-normal text-foreground border-r border-border/60">
-                    <div className="font-sans text-[13px]">{gpu}</div>
-                    <div className="text-[10.5px] text-muted-foreground mt-0.5">
+                <tr
+                  key={gpu}
+                  className="border-b border-border/60 last:border-b-0"
+                >
+                  <th className="sticky left-0 z-10 bg-background px-5 py-4 text-left font-normal text-foreground border-r border-border/60 align-middle">
+                    <div className="font-sans text-[13.5px]">{gpu}</div>
+                    <div className="text-[10.5px] text-muted-foreground mt-1 tabular">
                       ${stats.min.toFixed(2)} – ${stats.max.toFixed(2)}
                     </div>
                   </th>
@@ -153,7 +154,7 @@ export function ProviderHeatmap() {
                       return (
                         <td
                           key={p}
-                          className="px-2 py-3 text-center text-muted-foreground/30 border-r border-border/30 last:border-r-0"
+                          className="px-3 py-4 text-right text-muted-foreground/25 border-r border-border/25 last:border-r-0 align-middle"
                         >
                           —
                         </td>
@@ -168,7 +169,7 @@ export function ProviderHeatmap() {
                         key={p}
                         onMouseEnter={() => setHoveredCell(cellKey)}
                         onMouseLeave={() => setHoveredCell(null)}
-                        className="relative px-2 py-3 text-right border-r border-border/30 last:border-r-0 cursor-default transition-colors"
+                        className="relative px-3 py-4 text-right border-r border-border/25 last:border-r-0 cursor-default transition-colors align-middle"
                         style={{
                           background: cellColor(
                             cell.cheapestPerGpuHourUsd,
