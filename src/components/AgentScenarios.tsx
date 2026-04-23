@@ -8,48 +8,63 @@ type Scenario = {
   id: string;
   workload: string;
   spec: string;
+  /** One-line plain-English rationale for the spec — why this much compute */
+  rationale: string;
+  /** Which tier we'd recommend for this workload */
+  recommended: "cheapest" | "vetted" | "managed";
   gpu_model: string;
   gpu_count: number;
   hours: number;
-  hoursLabel: string;
 };
 
+// All specs verified against published model-training and inference
+// references. Pretraining (50K+ GPU-hours for 7B) is intentionally not
+// represented because it would dwarf every other scenario and isn't
+// reachable on these providers anyway.
 const SCENARIOS: Scenario[] = [
   {
-    id: "train-7b",
-    workload: "Train a 7B model",
-    spec: "8× H100 SXM for 24 hours",
+    id: "lora-7b",
+    workload: "LoRA fine-tune of a 7B model",
+    spec: "1× H100 SXM × 8 hours",
+    rationale:
+      "Parameter-efficient training on a single GPU. Typical for a single experiment over 50–200k examples.",
+    recommended: "cheapest",
+    gpu_model: "H100 SXM",
+    gpu_count: 1,
+    hours: 8,
+  },
+  {
+    id: "full-sft-7b",
+    workload: "Full-parameter SFT on a 7B model",
+    spec: "8× H100 SXM × 24 hours",
+    rationale:
+      "All weights updated, ~3 epochs over a 100k–1M-example dataset. Distributed across 8 GPUs at large effective batch size.",
+    recommended: "vetted",
     gpu_model: "H100 SXM",
     gpu_count: 8,
     hours: 24,
-    hoursLabel: "24h",
   },
   {
-    id: "inference-pool",
-    workload: "Run an inference pool",
-    spec: "4× A100 80GB, always-on (730h)",
+    id: "inference-70b",
+    workload: "Always-on inference for a 70B model",
+    spec: "4× A100 80GB × 730h (one month)",
+    rationale:
+      "320 GB total VRAM hosts a 70B model in fp8 or 4-bit quantization with room for KV cache. Always-on means production traffic 24/7.",
+    recommended: "managed",
     gpu_model: "A100 80GB",
     gpu_count: 4,
     hours: 730,
-    hoursLabel: "730h / mo",
   },
   {
-    id: "rl-tune",
-    workload: "RL fine-tune",
-    spec: "1× H100 SXM for 12 hours",
-    gpu_model: "H100 SXM",
-    gpu_count: 1,
-    hours: 12,
-    hoursLabel: "12h",
-  },
-  {
-    id: "b200-bench",
-    workload: "Bench on B200",
-    spec: "1× B200 for 4 hours",
+    id: "eval-b200",
+    workload: "Evaluation suite on B200",
+    spec: "1× B200 × 4 hours",
+    rationale:
+      "Full eval pass — MMLU, GSM8K, HumanEval, BBH — on the latest hardware. Single GPU, runs once per checkpoint.",
+    recommended: "cheapest",
     gpu_model: "B200",
     gpu_count: 1,
     hours: 4,
-    hoursLabel: "4h",
   },
 ];
 
@@ -73,7 +88,6 @@ function cheapestIn(
 function fmtUSD(n: number): string {
   if (n >= 1000) return `$${Math.round(n).toLocaleString()}`;
   if (n >= 100) return `$${Math.round(n)}`;
-  if (n >= 10) return `$${n.toFixed(2)}`;
   return `$${n.toFixed(2)}`;
 }
 
@@ -89,7 +103,6 @@ export function AgentScenarios() {
           r.gpu_count >= s.gpu_count,
       );
       const totalGpuHours = s.gpu_count * s.hours;
-
       const toPick = (row: GpuRow | null): Pick | null =>
         row
           ? {
@@ -98,7 +111,6 @@ export function AgentScenarios() {
               total: row.price_per_gpu_hour_usd * totalGpuHours,
             }
           : null;
-
       const cheapest = toPick(cheapestIn(matching, () => true));
       const vetted = toPick(
         cheapestIn(matching, (r) => VERIFIED_TIERS.has(r.tier)),
@@ -109,12 +121,10 @@ export function AgentScenarios() {
       const community = toPick(
         cheapestIn(matching, (r) => COMMUNITY_TIERS.has(r.tier)),
       );
-
       const savings =
         cheapest && managed && managed.total > 0
           ? (1 - cheapest.total / managed.total) * 100
           : null;
-
       return {
         scenario: s,
         totalGpuHours,
@@ -130,17 +140,15 @@ export function AgentScenarios() {
 
   return (
     <section>
-      <header className="flex items-baseline justify-between mb-10">
-        <div>
-          <h2 className="font-sans text-[24px] tracking-[-0.018em] text-foreground">
-            What a workload costs, today.
-          </h2>
-          <p className="mt-2 text-[14px] text-muted-foreground max-w-[58ch] leading-snug">
-            Every dollar below is the live cheapest across the providers
-            we track, computed from current listings. Pick a tier, see what
-            it would cost to run.
-          </p>
-        </div>
+      <header className="mb-10">
+        <h2 className="font-sans text-[24px] tracking-[-0.018em] text-foreground">
+          What a workload costs, today.
+        </h2>
+        <p className="mt-2 text-[14px] text-muted-foreground max-w-[60ch] leading-snug">
+          Concrete model-training and inference workloads, sized
+          realistically, priced from current listings across the providers
+          we track.
+        </p>
       </header>
 
       <div className="space-y-6">
@@ -172,22 +180,41 @@ function ScenarioCard({
   savings: number | null;
 }) {
   const noData = !cheapest && !managed;
+  const recBadge = {
+    cheapest: { text: "Cheapest is fine", tone: "default" },
+    vetted: { text: "Use a vetted host", tone: "default" },
+    managed: { text: "Managed only", tone: "warn" },
+  }[scenario.recommended];
 
   return (
     <article className="border border-border rounded-xl px-7 py-6 bg-background">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-1 mb-6 pb-5 border-b border-border/60">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5 pb-5 border-b border-border/60">
+        <div className="min-w-0">
           <div className="font-sans text-[17px] text-foreground tracking-[-0.012em]">
             {scenario.workload}
           </div>
-          <div className="text-[13px] text-muted-foreground mt-1">
+          <div className="text-[13px] text-muted-foreground mt-1 tabular">
             {scenario.spec}
           </div>
+          <div className="text-[12px] text-muted-foreground/80 mt-2 leading-snug max-w-[68ch]">
+            {scenario.rationale}
+          </div>
         </div>
-        <div className="text-[12px] text-muted-foreground tabular shrink-0">
-          {totalGpuHours.toLocaleString()} GPU-hours · {listings} listings
-          tracked
+        <div className="shrink-0 flex flex-col items-start md:items-end gap-1.5">
+          <span
+            className={
+              "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] " +
+              (recBadge.tone === "warn"
+                ? "bg-up/10 text-up"
+                : "bg-foreground/[0.06] text-foreground/85")
+            }
+          >
+            {recBadge.text}
+          </span>
+          <div className="text-[11.5px] text-muted-foreground tabular">
+            {totalGpuHours.toLocaleString()} GPU-hours · {listings} listings
+          </div>
         </div>
       </div>
 
@@ -201,13 +228,13 @@ function ScenarioCard({
             label="Cheapest"
             sub="best-effort, may churn"
             pick={cheapest}
-            tone="primary"
+            tone={scenario.recommended === "cheapest" ? "primary" : "default"}
           />
           <Column
             label="Vetted"
             sub="verified host, no SLA"
             pick={vetted ?? community}
-            tone="default"
+            tone={scenario.recommended === "vetted" ? "primary" : "default"}
             fallbackNote={
               vetted ? null : community ? "(community tier)" : null
             }
@@ -216,7 +243,7 @@ function ScenarioCard({
             label="Managed"
             sub="SLA + support"
             pick={managed}
-            tone="default"
+            tone={scenario.recommended === "managed" ? "primary" : "default"}
           />
         </div>
       )}
