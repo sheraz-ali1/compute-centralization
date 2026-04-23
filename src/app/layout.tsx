@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { fontSans, fontMono } from "@/lib/fonts";
+import { fontSans, fontMono, fontSerif } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -55,7 +55,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fontSans.variable} ${fontMono.variable} h-full antialiased`}
+      className={`${fontSans.variable} ${fontMono.variable} ${fontSerif.variable} h-full antialiased`}
     >
       <head>
         <script
