@@ -57,10 +57,20 @@ export function SpotIndex() {
     const matching = rows.filter(
       (r) => r.gpu_model === model && r.available,
     );
+    // The Spreads tab compares MARKETPLACE vs MANAGED. Cheapest is the
+    // best marketplace offer, not just the global minimum (which would
+    // sometimes be a managed-cloud row and collapse the spread).
+    const marketplaceRows = matching.filter((r) =>
+      COMMUNITY_TIERS.has(r.tier),
+    );
     const cheapest =
-      matching.length === 0
-        ? null
-        : matching.reduce((a, b) =>
+      marketplaceRows.length === 0
+        ? matching.length === 0
+          ? null
+          : matching.reduce((a, b) =>
+              a.price_per_gpu_hour_usd <= b.price_per_gpu_hour_usd ? a : b,
+            )
+        : marketplaceRows.reduce((a, b) =>
             a.price_per_gpu_hour_usd <= b.price_per_gpu_hour_usd ? a : b,
           );
     const enterpriseRows = matching.filter((r) =>

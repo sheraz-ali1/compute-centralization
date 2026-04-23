@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { AgentQuery } from "./AgentQuery";
-
-const SNIPPET = "claude mcp add computegrid https://[host]/mcp";
+import { useOrigin } from "@/lib/use-origin";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -26,10 +25,12 @@ const item: Variants = {
 
 export function Hero() {
   const [copied, setCopied] = useState(false);
+  const origin = useOrigin();
+  const snippet = `claude mcp add computegrid ${origin}/mcp`;
 
   const onConnect = async () => {
     try {
-      await navigator.clipboard.writeText(SNIPPET);
+      await navigator.clipboard.writeText(snippet);
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -112,7 +113,7 @@ export function Hero() {
             variants={item}
             className="mt-4 text-[12px] text-muted-foreground/70"
           >
-            {SNIPPET}
+            {snippet}
           </motion.div>
         </div>
 

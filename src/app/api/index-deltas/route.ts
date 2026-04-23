@@ -1,5 +1,6 @@
 import { sql } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +13,18 @@ const HERO_GPUS = [
   "B200",
 ];
 
-export async function GET() {
+// In-memory TTL cache. The deltas only change meaningfully when new
+// gpu_prices rollups land (every ~120s), and the underlying DB query is
+// per-model = 6 queries per request. Memoizing at 60s dramatically cuts
+// DB load from a public unauth endpoint.
+const TTL_MS = 60_000;
+type CacheEntry = { ts: number; data: Record<string, number | null> };
+const g = globalThis as unknown as { __computegridDeltaCache?: CacheEntry };
+
+async function compute(): Promise<Record<string, number | null>> {
   const out: Record<string, number | null> = {};
+  // Single query per model but we can union them. For now keep the
+  // simple per-model structure — the TTL cache is the load reducer.
   for (const model of HERO_GPUS) {
     try {
       const rows = await sql<
@@ -43,5 +54,30 @@ export async function GET() {
       out[model] = null;
     }
   }
-  return NextResponse.json(out);
+  return out;
+}
+
+export async function GET() {
+  const now = Date.now();
+  const entry = g.__computegridDeltaCache;
+  if (entry && now - entry.ts < TTL_MS) {
+    return NextResponse.json(entry.data, {
+      headers: {
+        "cache-control": `public, max-age=${Math.floor((TTL_MS - (now - entry.ts)) / 1000)}`,
+        ...PUBLIC_CORS_HEADERS,
+      },
+    });
+  }
+  const data = await compute();
+  g.__computegridDeltaCache = { ts: now, data };
+  return NextResponse.json(data, {
+    headers: {
+      "cache-control": `public, max-age=${TTL_MS / 1000}`,
+      ...PUBLIC_CORS_HEADERS,
+    },
+  });
+}
+
+export async function OPTIONS() {
+  return corsPreflight();
 }

@@ -21,17 +21,21 @@ type Scenario = {
 // references. Pretraining (50K+ GPU-hours for 7B) is intentionally not
 // represented because it would dwarf every other scenario and isn't
 // reachable on these providers anyway.
+// Order: lead with the workload where the marketplace-vs-managed spread
+// is most dramatic in absolute dollars. Going cheaper saves more on
+// always-on inference than on a one-off LoRA, so that's first; SFT
+// second (substantial spread + flagship GPU); then the smaller cases.
 const SCENARIOS: Scenario[] = [
   {
-    id: "lora-7b",
-    workload: "LoRA fine-tune of a 7B model",
-    spec: "1× H100 SXM × 8 hours",
+    id: "inference-70b",
+    workload: "Always-on inference for a 70B model",
+    spec: "4× A100 80GB × 730h (one month)",
     rationale:
-      "Parameter-efficient training on a single GPU. Typical for a single experiment over 50–200k examples.",
-    recommended: "cheapest",
-    gpu_model: "H100 SXM",
-    gpu_count: 1,
-    hours: 8,
+      "320 GB total VRAM hosts a 70B model in fp8 or 4-bit quantization with room for KV cache. Always-on means production traffic 24/7.",
+    recommended: "managed",
+    gpu_model: "A100 80GB",
+    gpu_count: 4,
+    hours: 730,
   },
   {
     id: "full-sft-7b",
@@ -45,15 +49,15 @@ const SCENARIOS: Scenario[] = [
     hours: 24,
   },
   {
-    id: "inference-70b",
-    workload: "Always-on inference for a 70B model",
-    spec: "4× A100 80GB × 730h (one month)",
+    id: "lora-7b",
+    workload: "LoRA fine-tune of a 7B model",
+    spec: "1× H100 SXM × 8 hours",
     rationale:
-      "320 GB total VRAM hosts a 70B model in fp8 or 4-bit quantization with room for KV cache. Always-on means production traffic 24/7.",
-    recommended: "managed",
-    gpu_model: "A100 80GB",
-    gpu_count: 4,
-    hours: 730,
+      "Parameter-efficient training on a single GPU. Typical for a single experiment over 50–200k examples.",
+    recommended: "cheapest",
+    gpu_model: "H100 SXM",
+    gpu_count: 1,
+    hours: 8,
   },
   {
     id: "eval-b200",
@@ -96,11 +100,15 @@ export function AgentScenarios() {
 
   const computed = useMemo(() => {
     return SCENARIOS.map((s) => {
+      // Require an exact gpu_count match. Listings of "8x" instances
+      // can't be rented as "4x"; pricing them per-GPU and pretending
+      // you can fractionally rent is misleading to anyone who's
+      // actually rented bare-metal multi-GPU nodes.
       const matching = rows.filter(
         (r) =>
           r.gpu_model === s.gpu_model &&
           r.available &&
-          r.gpu_count >= s.gpu_count,
+          r.gpu_count === s.gpu_count,
       );
       const totalGpuHours = s.gpu_count * s.hours;
       const toPick = (row: GpuRow | null): Pick | null =>
@@ -237,21 +245,26 @@ function ScenarioCard({
         </div>
       )}
 
-      {savings !== null && cheapest && managed && (
-        <div className="mt-6 pt-5 border-t border-border/60 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 text-[13px]">
-          <div className="text-muted-foreground">
-            Going to <span className="text-foreground">cheapest</span> instead
-            of <span className="text-foreground">managed</span> saves{" "}
-            <span className="text-down tabular">
-              {fmtUSD(managed.total - cheapest.total)}
-            </span>{" "}
-            on this run.
+      {savings !== null &&
+        savings > 1 &&
+        cheapest &&
+        managed &&
+        cheapest.row.id !== managed.row.id && (
+          <div className="mt-6 pt-5 border-t border-border/60 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 text-[13px]">
+            <div className="text-muted-foreground">
+              Going to <span className="text-foreground">cheapest</span>{" "}
+              instead of <span className="text-foreground">managed</span>{" "}
+              saves{" "}
+              <span className="text-down tabular">
+                {fmtUSD(managed.total - cheapest.total)}
+              </span>{" "}
+              on this run.
+            </div>
+            <div className="text-down tabular">
+              −{savings.toFixed(0)}% total
+            </div>
           </div>
-          <div className="text-down tabular">
-            −{savings.toFixed(0)}% total
-          </div>
-        </div>
-      )}
+        )}
     </article>
   );
 }

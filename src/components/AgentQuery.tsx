@@ -7,7 +7,6 @@ import type { GpuRow } from "@/lib/schema";
 
 const ROTATION = ["H100 SXM", "A100 80GB", "B200", "L40S", "RTX 4090"];
 const ENTERPRISE_TIERS = new Set(["secure", "standard"]);
-const COMMUNITY_TIERS = new Set(["community", "verified", "unverified"]);
 const ROTATE_MS = 4500;
 
 function cheapestOf(rows: GpuRow[]): GpuRow | null {
@@ -45,8 +44,10 @@ export function AgentQuery() {
       matching.filter((r) => ENTERPRISE_TIERS.has(r.tier)),
     );
     const total = matching.length;
-    const marketplaceListings = matching
-      .filter((r) => COMMUNITY_TIERS.has(r.tier))
+    // Vast offer count specifically — the label says "on Vast" so it
+    // shouldn't include other marketplace tiers like RunPod community.
+    const vastOffers = matching
+      .filter((r) => r.provider === "vast")
       .reduce((s, r) => s + r.offer_count, 0);
     const savings =
       cheapest && enterprise && enterprise.price_per_gpu_hour_usd > 0
@@ -55,7 +56,7 @@ export function AgentQuery() {
               enterprise.price_per_gpu_hour_usd) *
           100
         : null;
-    return { cheapest, enterprise, total, marketplaceListings, savings };
+    return { cheapest, enterprise, total, vastOffers, savings };
   }, [rows, model]);
 
   const ageS = fetchedAt
@@ -149,9 +150,9 @@ export function AgentQuery() {
                   <div className="text-foreground tabular">
                     {result.total} listings
                   </div>
-                  {result.marketplaceListings > 0 && (
+                  {result.vastOffers > 0 && (
                     <div className="text-muted-foreground">
-                      {result.marketplaceListings} on Vast
+                      {result.vastOffers} on Vast
                     </div>
                   )}
                 </Field>

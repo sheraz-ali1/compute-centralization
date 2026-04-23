@@ -1,4 +1,5 @@
 const RULES: Array<[RegExp, string]> = [
+  [/h100.*nvl/i, "H100 NVL"],
   [/h100.*pcie/i, "H100 PCIe"],
   [/h100.*sxm|h100.*hbm/i, "H100 SXM"],
   [/h100/i, "H100 SXM"],
@@ -20,4 +21,33 @@ export function canonicalizeGpuName(input: string): string {
     if (re.test(trimmed)) return canon;
   }
   return trimmed;
+}
+
+/**
+ * Refine a canonical GPU model using additional signals (VRAM in GB per
+ * GPU, free-form listing name). Catches cases where the bare model
+ * string is ambiguous:
+ *   - "A100" with 40 GB VRAM should be "A100 40GB", not "A100 80GB"
+ *   - An "H100" listing whose name mentions PCIe should be "H100 PCIe"
+ */
+export function refineGpuModel(
+  canonical: string,
+  opts: { vramGb?: number; listingName?: string } = {},
+): string {
+  const { vramGb, listingName } = opts;
+
+  // A100 40GB vs 80GB: canonicalizer defaults ambiguous "A100" to 80GB,
+  // but many providers list 40GB SKUs under a bare "A100" name.
+  if (canonical === "A100 80GB" && vramGb !== undefined && vramGb > 0 && vramGb < 60) {
+    return "A100 40GB";
+  }
+
+  // H100 SXM vs PCIe vs NVL: short name "H100" is often used for
+  // anything with an H100 chip; use listing name hints.
+  if (listingName && canonical === "H100 SXM") {
+    if (/\bNVL\b/i.test(listingName)) return "H100 NVL";
+    if (/\bPCIe?\b/i.test(listingName)) return "H100 PCIe";
+  }
+
+  return canonical;
 }

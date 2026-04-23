@@ -144,18 +144,46 @@ async function rollupPrices(rows: GpuRow[]) {
 let started = false;
 let inFlight = false;
 
+// Hard watchdog: if a tick doesn't finish in this window, release the
+// latch so the next tick can run. Prevents a silently hung scraper or
+// stalled Postgres from permanently stopping the refresher (which would
+// go undetected until cache age > 600s trips /api/health).
+const TICK_WATCHDOG_MS = 90_000;
+
 async function tick() {
   if (inFlight) {
     console.warn("refresher: previous cycle still running, skipping tick");
     return;
   }
   inFlight = true;
+  const watchdog = setTimeout(() => {
+    console.error(
+      `refresher: watchdog fired after ${TICK_WATCHDOG_MS}ms — releasing in-flight latch`,
+    );
+    inFlight = false;
+  }, TICK_WATCHDOG_MS);
   try {
     await refreshOnce();
   } catch (e) {
     console.error("refresh failed", e);
   } finally {
+    clearTimeout(watchdog);
     inFlight = false;
+  }
+}
+
+/**
+ * Retention: keep the snapshots table (raw jsonb payloads) bounded. Without
+ * this it grows unbounded — ~21k rows/month × multi-KB each = GBs over a
+ * year. gpu_prices rollup is kept indefinitely since it's small and the
+ * historical price track is the actual product.
+ */
+async function runRetention() {
+  try {
+    const { sql } = await import("@/lib/db");
+    await sql`delete from snapshots where fetched_at < now() - interval '30 days'`;
+  } catch (e) {
+    console.warn("refresher: retention failed (non-fatal)", e);
   }
 }
 
@@ -165,4 +193,6 @@ export function startRefresher() {
   console.log("refresher: starting");
   tick();
   setInterval(tick, INTERVAL_MS);
+  // Retention every 6h.
+  setInterval(runRetention, 6 * 60 * 60_000);
 }

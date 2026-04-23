@@ -1,5 +1,10 @@
-import { canonicalizeGpuName } from "@/lib/gpu-canonical";
+import { canonicalizeGpuName, refineGpuModel } from "@/lib/gpu-canonical";
 import type { GpuRow, Tier } from "@/lib/schema";
+
+// Sanity bound: filter out clearly-bogus prices. Some provider pages
+// publish a sentinel value (e.g. $999,999) for "contact for quote"
+// listings — those poison the order book and the median.
+const MAX_REASONABLE_PRICE_PER_GPU_HOUR_USD = 200;
 
 const ENDPOINT = "https://console.vast.ai/api/v0/bundles/";
 // Fetch a comprehensive sample of currently-rentable on-demand offers.
@@ -35,7 +40,16 @@ export function parseVast(payload: { offers?: VastOffer[] }): GpuRow[] {
   for (const o of offers) {
     if (!o.gpu_name || !o.num_gpus || !o.dph_base) continue;
     if (o.gpu_ram == null || o.gpu_ram <= 0) continue;
-    const model = canonicalizeGpuName(o.gpu_name);
+    // Skip sentinel/contact-for-quote prices.
+    const perGpuPrice = o.dph_base / o.num_gpus;
+    if (perGpuPrice > MAX_REASONABLE_PRICE_PER_GPU_HOUR_USD) continue;
+    // Refine using vram_gb so e.g. 40 GB cards labeled "A100" don't get
+    // bucketed as A100 80GB.
+    const vramGb = Math.round(o.gpu_ram / 1024);
+    const model = refineGpuModel(canonicalizeGpuName(o.gpu_name), {
+      vramGb,
+      listingName: o.gpu_name,
+    });
     const tier: Tier = o.verification === "verified" ? "verified" : "unverified";
     const key = `${model}|${o.num_gpus}|${tier}`;
     if (!groups.has(key)) groups.set(key, { offers: [], tier, model });

@@ -103,8 +103,18 @@ export function ProviderHeatmap() {
 
   return (
     <section>
-      <div className="overflow-x-auto rounded-xl border border-border bg-background">
-        <table className="w-full border-collapse text-[12.5px] tabular">
+      <div className="relative">
+        {/* Right-edge fade indicates the table scrolls horizontally */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 z-20 rounded-r-xl"
+          style={{
+            background:
+              "linear-gradient(to left, var(--background) 8%, transparent)",
+          }}
+        />
+        <div className="overflow-x-auto rounded-xl border border-border bg-background">
+          <table className="border-collapse text-[12.5px] tabular">
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-background px-5 h-12 text-left font-normal text-[11px] text-muted-foreground/75 border-b border-border min-w-[150px]">
@@ -210,8 +220,9 @@ export function ProviderHeatmap() {
                 </tr>
               );
             })}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <p className="mt-3 text-[11px] text-muted-foreground/70 leading-relaxed">

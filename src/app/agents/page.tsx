@@ -1,6 +1,7 @@
 import { Wordmark } from "@/components/Wordmark";
 import { AudienceToggle } from "@/components/AudienceToggle";
 import { Footer } from "@/components/Footer";
+import { AgentsInstall } from "@/components/AgentsInstall";
 
 export const metadata = {
   title: "Compute Grid · for agents",
@@ -31,13 +32,10 @@ export default function AgentsPage() {
             One command. No keys, no accounts. Streamable HTTP transport,
             session-less, JSON responses by default.
           </p>
-          <pre>
-            <code>claude mcp add computegrid https://[host]/mcp</code>
-          </pre>
+          <AgentsInstall />
           <p className="muted">
-            Replace <code>[host]</code> with your deployment URL. The same
-            endpoint works in Cursor, custom Anthropic SDK clients, and any
-            MCP-compatible host.
+            The same endpoint works in Cursor, custom Anthropic SDK
+            clients, and any MCP-compatible host.
           </p>
 
           <h2>Tools</h2>

@@ -11,10 +11,6 @@ class SseBus {
   private entries = new Set<Entry>();
   private perIpCount = new Map<string, number>();
 
-  /**
-   * Subscribe a listener identified by client IP. Returns the unsubscribe
-   * function, or null if either the global cap or the per-IP cap is hit.
-   */
   subscribe(fn: Listener, ip: string): (() => void) | null {
     if (this.entries.size >= MAX_LISTENERS) return null;
     const ipCount = this.perIpCount.get(ip) ?? 0;
@@ -34,15 +30,19 @@ class SseBus {
 
   publish(event: string, data: unknown) {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-    for (const entry of this.entries) {
+    // Snapshot entries first so deletions during iteration (errored
+    // listeners) don't affect the traversal.
+    const snapshot = [...this.entries];
+    for (const entry of snapshot) {
       try {
         entry.fn(payload);
       } catch {
         // listener errored — drop it so it can't keep failing
-        this.entries.delete(entry);
-        const c = (this.perIpCount.get(entry.ip) ?? 1) - 1;
-        if (c <= 0) this.perIpCount.delete(entry.ip);
-        else this.perIpCount.set(entry.ip, c);
+        if (this.entries.delete(entry)) {
+          const c = (this.perIpCount.get(entry.ip) ?? 1) - 1;
+          if (c <= 0) this.perIpCount.delete(entry.ip);
+          else this.perIpCount.set(entry.ip, c);
+        }
       }
     }
   }
@@ -51,8 +51,6 @@ class SseBus {
     return this.entries.size;
   }
 }
-// Pin singleton on globalThis so it survives across module instances
-// (Next dev mode / Turbopack may otherwise compile this module twice).
 const g = globalThis as unknown as { __computegridSseBus?: SseBus };
 export const sseBus =
   g.__computegridSseBus ?? (g.__computegridSseBus = new SseBus());

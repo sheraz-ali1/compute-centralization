@@ -1,4 +1,9 @@
 import { perGpuVram } from "@/lib/gpu-vram";
+import { refineGpuModel } from "@/lib/gpu-canonical";
+
+// Sanity bound — many provider rows on getdeploying carry sentinel
+// values like 999999 for "contact for quote" listings.
+const MAX_REASONABLE_PRICE_PER_GPU_HOUR_USD = 200;
 import type { GpuRow } from "@/lib/schema";
 
 // GPU model slugs to fetch from getdeploying.com. The slugs map to URLs
@@ -98,18 +103,33 @@ export function parseGetdeploying(
 
     const pricePerGpu = parseFloat(listing.data_price_per_gpu ?? "0");
     if (!Number.isFinite(pricePerGpu) || pricePerGpu <= 0) continue;
+    if (pricePerGpu > MAX_REASONABLE_PRICE_PER_GPU_HOUR_USD) continue;
 
     const gpuCount = listing.gpu_count > 0 ? listing.gpu_count : 1;
     const vramRaw = parseInt(listing.data_vram ?? "0", 10);
-    const vramGb = vramRaw > 0 ? vramRaw : (perGpuVram(canonicalGpu) ?? 80);
+    // getdeploying's data_vram is sometimes per-instance (total across
+    // all GPUs) — divide by gpu_count to normalize to per-GPU.
+    const vramGb =
+      vramRaw > 0
+        ? Math.round(vramRaw / Math.max(1, gpuCount))
+        : (perGpuVram(canonicalGpu) ?? 80);
     const billing = listing.billing_type ?? "ON_DEMAND";
-    // Only on-demand for v1. Reservations have term commitments, different
-    // value prop. Skip them so we're comparing apples-to-apples.
     if (billing !== "ON_DEMAND") continue;
+
+    // Refine the canonical model using the listing name (e.g. Thunder
+    // Compute's "1x H100 80GB PCIe (Prototyping)" is H100 PCIe, not
+    // H100 SXM) AND the per-GPU VRAM (catches A100 40GB-as-A100-80GB).
+    const refined = refineGpuModel(canonicalGpu, {
+      vramGb,
+      listingName: listing.name,
+    });
 
     const available = listing.availability !== "UNAVAILABLE";
 
-    const id = `${provSlug}:${canonicalGpu}:standard:${gpuCount}`;
+    // Include the listing's primary key in the id to disambiguate
+    // multiple SKUs from the same provider/model (different VRAM,
+    // different SKU codes, etc.).
+    const id = `${provSlug}:${refined}:standard:${gpuCount}:${listing.id}`;
     if (seen.has(id)) continue;
     seen.add(id);
 
@@ -117,7 +137,7 @@ export function parseGetdeploying(
       id,
       provider: provSlug,
       tier: "standard",
-      gpu_model: canonicalGpu,
+      gpu_model: refined,
       vram_gb: vramGb,
       gpu_count: gpuCount,
       price_per_gpu_hour_usd: pricePerGpu,

@@ -64,9 +64,16 @@ export const mcpLimiter =
   }));
 
 export function clientIp(req: Request): string {
+  // On Railway (and most platform providers), the upstream proxy APPENDS
+  // the true client IP to the end of X-Forwarded-For. A client can forge
+  // earlier entries but can't remove the one their request actually
+  // originated from — so the LAST entry is the trust boundary.
   const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
+  if (fwd) {
+    const parts = fwd.split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts.length > 0) return parts[parts.length - 1];
+  }
   const real = req.headers.get("x-real-ip");
-  if (real) return real;
+  if (real) return real.trim();
   return "unknown";
 }

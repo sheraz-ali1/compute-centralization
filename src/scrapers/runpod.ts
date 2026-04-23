@@ -1,5 +1,8 @@
-import { canonicalizeGpuName } from "@/lib/gpu-canonical";
+import { canonicalizeGpuName, refineGpuModel } from "@/lib/gpu-canonical";
 import type { GpuRow } from "@/lib/schema";
+
+// Sanity bound — drop sentinel/contact-for-quote prices.
+const MAX_REASONABLE_PRICE_PER_GPU_HOUR_USD = 200;
 
 const ENDPOINT = "https://api.runpod.io/graphql";
 const QUERY = `{ gpuTypes { id displayName memoryInGb securePrice communityPrice secureCloud communityCloud } }`;
@@ -23,12 +26,27 @@ export function parseRunpod(payload: {
 
   for (const g of gpus) {
     if (!g?.displayName || !g?.memoryInGb) continue;
-    const model = canonicalizeGpuName(g.displayName);
+    const model = refineGpuModel(canonicalizeGpuName(g.displayName), {
+      vramGb: g.memoryInGb,
+      listingName: g.displayName,
+    });
+    // Disambiguate listings of the same canonical model that are
+    // actually different SKUs (e.g. RunPod has both "H100 80GB HBM3"
+    // and "H100 NVL 94GB" both reduce to "H100 SXM"; previously these
+    // collided on id = "runpod:H100 SXM:community:1").
+    const idSuffix = `${model}|${g.memoryInGb}|${g.id}`
+      .replace(/\s+/g, "-")
+      .toLowerCase();
     const baseRegions: string[] = [];
 
-    if (g.secureCloud && g.securePrice && g.securePrice > 0) {
+    if (
+      g.secureCloud &&
+      g.securePrice &&
+      g.securePrice > 0 &&
+      g.securePrice < MAX_REASONABLE_PRICE_PER_GPU_HOUR_USD
+    ) {
       rows.push({
-        id: `runpod:${model}:secure:1`,
+        id: `runpod:secure:${idSuffix}`,
         provider: "runpod",
         tier: "secure",
         gpu_model: model,
@@ -43,9 +61,14 @@ export function parseRunpod(payload: {
         fetched_at,
       });
     }
-    if (g.communityCloud && g.communityPrice && g.communityPrice > 0) {
+    if (
+      g.communityCloud &&
+      g.communityPrice &&
+      g.communityPrice > 0 &&
+      g.communityPrice < MAX_REASONABLE_PRICE_PER_GPU_HOUR_USD
+    ) {
       rows.push({
-        id: `runpod:${model}:community:1`,
+        id: `runpod:community:${idSuffix}`,
         provider: "runpod",
         tier: "community",
         gpu_model: model,
