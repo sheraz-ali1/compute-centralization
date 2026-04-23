@@ -48,6 +48,13 @@ export function Hero() {
       >
         {/* LEFT — copy + actions */}
         <div>
+          <motion.div
+            variants={item}
+            className="text-[13px] text-muted-foreground mb-4"
+          >
+            Step 1 · open price feed
+          </motion.div>
+
           <motion.h1
             variants={item}
             className="font-sans font-light text-[40px] sm:text-[48px] md:text-[56px] leading-[1.04] tracking-[-0.03em] text-foreground text-balance"

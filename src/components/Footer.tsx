@@ -10,11 +10,11 @@ export function Footer() {
       try {
         const r = await fetch("/api/health").then((r) => r.json());
         if (cancelled) return;
-        setAge(
-          typeof r?.last_snapshot_age_s === "number"
-            ? r.last_snapshot_age_s
-            : null,
-        );
+        // Health response nests cache fields under `cache` since the
+        // pre-deploy refactor: { ok, cache: { ok, last_snapshot_age_s,
+        // rows }, db: { ok, error } }.
+        const a = r?.cache?.last_snapshot_age_s;
+        setAge(typeof a === "number" ? a : null);
       } catch {
         if (!cancelled) setAge(null);
       }

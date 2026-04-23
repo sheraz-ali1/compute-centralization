@@ -142,12 +142,16 @@ async function rollupPrices(rows: GpuRow[]) {
 }
 
 let started = false;
-let inFlight = false;
+// Cycle-owning token. When `inFlight !== null`, a tick is in progress;
+// each path that releases the latch (watchdog vs finally) checks that
+// it owns the current cycle before clearing, so a long-running tick #1
+// can't release the latch belonging to tick #2 mid-flight (which would
+// let tick #3 run concurrently with tick #2).
+let inFlight: symbol | null = null;
 
 // Hard watchdog: if a tick doesn't finish in this window, release the
 // latch so the next tick can run. Prevents a silently hung scraper or
-// stalled Postgres from permanently stopping the refresher (which would
-// go undetected until cache age > 600s trips /api/health).
+// stalled Postgres from permanently stopping the refresher.
 const TICK_WATCHDOG_MS = 90_000;
 
 async function tick() {
@@ -155,12 +159,15 @@ async function tick() {
     console.warn("refresher: previous cycle still running, skipping tick");
     return;
   }
-  inFlight = true;
+  const myToken = Symbol("tick");
+  inFlight = myToken;
   const watchdog = setTimeout(() => {
-    console.error(
-      `refresher: watchdog fired after ${TICK_WATCHDOG_MS}ms — releasing in-flight latch`,
-    );
-    inFlight = false;
+    if (inFlight === myToken) {
+      console.error(
+        `refresher: watchdog fired after ${TICK_WATCHDOG_MS}ms — releasing in-flight latch`,
+      );
+      inFlight = null;
+    }
   }, TICK_WATCHDOG_MS);
   try {
     await refreshOnce();
@@ -168,7 +175,7 @@ async function tick() {
     console.error("refresh failed", e);
   } finally {
     clearTimeout(watchdog);
-    inFlight = false;
+    if (inFlight === myToken) inFlight = null;
   }
 }
 

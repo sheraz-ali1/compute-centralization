@@ -187,15 +187,28 @@ async function fetchPage(slug: string, canonical: string): Promise<GpuRow[]> {
 
 export async function fetchGetdeploying(): Promise<GpuRow[]> {
   const all: GpuRow[] = [];
+  let successes = 0;
+  const errors: string[] = [];
   // Sequential to be a polite scraper neighbor (small delay between pages).
   for (const { slug, canonical } of GPU_SLUGS) {
     try {
       const rows = await fetchPage(slug, canonical);
       all.push(...rows);
+      successes++;
       await new Promise((r) => setTimeout(r, 250));
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      errors.push(`${slug}: ${msg}`);
       console.warn(`getdeploying ${slug} failed:`, e);
     }
+  }
+  // Fail loud if every page failed — otherwise the refresher's
+  // per-source stale-retention path doesn't trigger and we silently
+  // wipe ~30 aggregator providers from the cache.
+  if (successes === 0) {
+    throw new Error(
+      `getdeploying: all ${GPU_SLUGS.length} pages failed — ${errors.join("; ")}`,
+    );
   }
   return all;
 }
