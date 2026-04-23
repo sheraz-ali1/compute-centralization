@@ -49,9 +49,12 @@ export function Hero() {
         <div>
           <motion.div
             variants={item}
-            className="inline-flex items-center gap-2 text-[12.5px] text-muted-foreground mb-6"
+            className="inline-flex items-center gap-2.5 text-[13px] text-muted-foreground mb-6"
           >
-            <GridGlyph />
+            <span
+              className="size-[7px] rounded-full bg-down animate-pulse"
+              aria-hidden
+            />
             <span>MCP server for GPU compute</span>
           </motion.div>
 
@@ -125,32 +128,3 @@ export function Hero() {
   );
 }
 
-function GridGlyph() {
-  return (
-    <svg
-      width="11"
-      height="11"
-      viewBox="0 0 18 18"
-      aria-hidden
-      className="text-foreground"
-    >
-      {Array.from({ length: 9 }).map((_, i) => {
-        const row = Math.floor(i / 3);
-        const col = i % 3;
-        const isAccent = i === 8;
-        return (
-          <rect
-            key={i}
-            x={col * 6.5}
-            y={row * 6.5}
-            width={4}
-            height={4}
-            rx={0.6}
-            fill={isAccent ? "var(--brand)" : "currentColor"}
-            fillOpacity={isAccent ? 1 : 0.85}
-          />
-        );
-      })}
-    </svg>
-  );
-}
