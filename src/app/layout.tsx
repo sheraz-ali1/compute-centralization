@@ -27,7 +27,7 @@ const jsonLd = {
     "AI infrastructure",
   ],
   license: "https://opensource.org/licenses/MIT",
-  url: "https://computegrid.dev/",
+  url: "https://compute-grid.com/",
   creator: {
     "@type": "Organization",
     name: "ComputeGrid",
