@@ -26,7 +26,7 @@ const item: Variants = {
 export function Hero() {
   const [copied, setCopied] = useState(false);
   const origin = useOrigin();
-  const snippet = `claude mcp add computegrid ${origin}/mcp`;
+  const snippet = `claude mcp add --transport http computegrid ${origin}/mcp`;
 
   const onConnect = async () => {
     try {

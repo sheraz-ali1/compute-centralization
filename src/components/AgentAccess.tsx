@@ -2,7 +2,7 @@
 import { Section } from "./Section";
 import { useState } from "react";
 
-const SNIPPET = "claude mcp add computegrid https://[host]/mcp";
+const SNIPPET = "claude mcp add --transport http computegrid https://[host]/mcp";
 
 export function AgentAccess() {
   const [copied, setCopied] = useState(false);
