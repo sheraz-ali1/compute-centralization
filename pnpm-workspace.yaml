@@ -1,0 +1,11 @@
+packages:
+  - "."
+# Skip native postinstall builds. Previously declared under package.json's
+# "pnpm" field, but Railpack regenerates pnpm-workspace.yaml from that field
+# without a "packages" entry, which pnpm rejects ("packages field missing or
+# empty") and breaks the Railway build. Declaring the workspace file
+# ourselves — with a valid packages field — keeps Railpack from generating a
+# broken one.
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
