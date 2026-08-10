@@ -202,12 +202,20 @@ export async function fetchGetdeploying(): Promise<GpuRow[]> {
       console.warn(`getdeploying ${slug} failed:`, e);
     }
   }
-  // Fail loud if every page failed — otherwise the refresher's
-  // per-source stale-retention path doesn't trigger and we silently
-  // wipe ~30 aggregator providers from the cache.
-  if (successes === 0) {
+  // Fail loud if ANY page failed, not just if all of them did.
+  //
+  // A partial result is the dangerous case: returning it looks like success,
+  // so the refresher's per-source stale-retention path never triggers and the
+  // missing pages' rows get silently overwritten. One blocked page
+  // (nvidia-h100) took the index from 532 rows to 310 with ok=true across the
+  // board — see lessons/partial-scrape-silent-overwrite.md.
+  //
+  // Retaining the previous complete set beats publishing a truncated one: in a
+  // price index a missing provider reads as "no offers from them," which is a
+  // wrong answer rather than an absent one.
+  if (errors.length > 0) {
     throw new Error(
-      `getdeploying: all ${GPU_SLUGS.length} pages failed — ${errors.join("; ")}`,
+      `getdeploying: ${errors.length}/${GPU_SLUGS.length} pages failed (${successes} ok) — ${errors.join("; ")}`,
     );
   }
   return all;
