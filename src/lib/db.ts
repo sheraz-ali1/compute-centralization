@@ -18,9 +18,18 @@ function getClient(): Sql {
     throw new Error("DATABASE_URL not set");
   }
   client = postgres(url, {
-    max: 10,
+    // One long-lived Railway container could justify a pool of 10. On
+    // serverless every concurrent invocation gets its own pool, so a high
+    // ceiling multiplies into a lot of connections against Neon.
+    max: 3,
     idle_timeout: 30,
     connect_timeout: 10,
+    // Neon's pooled endpoint (-pooler) is PgBouncer in transaction mode,
+    // which can't carry protocol-level prepared statements across
+    // transactions. postgres.js prepares tagged queries by default, so
+    // leaving this on produces intermittent "prepared statement already
+    // exists" errors under concurrency.
+    prepare: false,
     // Cap any single statement at 10s so a hung Postgres can't wedge a
     // refresh cycle or a health check indefinitely.
     connection: { statement_timeout: 10_000 },

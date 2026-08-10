@@ -1,12 +1,16 @@
-import { cache } from "@/lib/cache";
 import { NextResponse } from "next/server";
+import { readState } from "@/lib/store";
 import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json(cache.getEvents(20), {
-    headers: PUBLIC_CORS_HEADERS,
+  const state = await readState();
+  return NextResponse.json(state.events.slice(0, 20), {
+    headers: {
+      "cache-control": "public, max-age=0, s-maxage=30, stale-while-revalidate=120",
+      ...PUBLIC_CORS_HEADERS,
+    },
   });
 }
 

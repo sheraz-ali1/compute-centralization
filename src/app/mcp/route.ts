@@ -59,7 +59,7 @@ function buildServer() {
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     if (req.params.name === "list_gpus") {
       const input = listGpusInput.parse(req.params.arguments ?? {});
-      const rows = listGpus(input);
+      const rows = listGpus(input, (await readState()).rows);
       return {
         content: [
           { type: "text", text: JSON.stringify({ rows }, null, 2) },
@@ -80,6 +80,7 @@ function buildServer() {
 }
 
 import { PUBLIC_CORS_HEADERS, corsPreflight } from "@/lib/cors";
+import { readState } from "@/lib/store";
 import { mcpLimiter, clientIp } from "@/lib/rate-limit";
 
 async function handle(req: Request): Promise<Response> {

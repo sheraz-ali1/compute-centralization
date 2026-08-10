@@ -2,12 +2,21 @@ import { fetchRunpod } from "@/scrapers/runpod";
 import { fetchVast } from "@/scrapers/vast";
 import { fetchVultr } from "@/scrapers/vultr";
 import { fetchGetdeploying } from "@/scrapers/getdeploying";
-import { cache, diffSnapshots } from "@/lib/cache";
-import { sseBus } from "@/lib/sse-bus";
+import { diffSnapshots } from "@/lib/cache";
+import {
+  acquireRefreshLease,
+  readState,
+  releaseRefreshLease,
+  stateAgeMs,
+  writeState,
+} from "@/lib/store";
 import { sql } from "@/lib/db";
 import type { GpuRow } from "@/lib/schema";
 
-const INTERVAL_MS = 120_000;
+// How old the stored snapshot may get before a request triggers a
+// background refresh. Matches the 120s cadence the Railway setInterval
+// used to run at.
+const STALE_AFTER_MS = 120_000;
 
 // Source identifiers — the *source*, not necessarily the provider name on
 // the row. RunPod/Vast/Vultr are direct integrations; getdeploying is a
@@ -48,6 +57,12 @@ function rowSource(r: GpuRow): SourceId | null {
 }
 
 export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[] }> {
+  // The refresh path is the only place that touches the filesystem to read
+  // migration SQL, so it's also the only place that needs the schema to
+  // exist. Read paths tolerate an unmigrated DB by reading as empty.
+  await ensureMigrated();
+  const prev = await readState();
+
   const results = await Promise.all([
     runOne("runpod", fetchRunpod),
     runOne("vast", fetchVast),
@@ -56,7 +71,7 @@ export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[]
   ]);
 
   // Per-source isolation: keep prior rows for failed sources
-  const prevRows = cache.getRows();
+  const prevRows = prev.rows;
   const allRows: GpuRow[] = [];
   for (const r of results) {
     if (r.ok) {
@@ -77,7 +92,7 @@ export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[]
   const diff = isFirstRefresh
     ? { added: [], removed: [], repriced: [] }
     : diffSnapshots(prevRows, allRows);
-  cache.set(allRows, diff);
+  await writeState(allRows, diff, prev.events);
 
   // Persist
   await Promise.all(
@@ -91,16 +106,6 @@ export async function refreshOnce(): Promise<{ rows: GpuRow[]; results: Result[]
 
   // Roll up gpu_prices
   await rollupPrices(allRows);
-
-  // Broadcast diff (skipped on cold start — see above)
-  if (!isFirstRefresh) {
-    sseBus.publish("diff", {
-      added: diff.added,
-      removed: diff.removed.map((r) => ({ id: r.id })),
-      repriced: diff.repriced,
-      fetched_at: cache.getLastFetched(),
-    });
-  }
 
   return { rows: allRows, results };
 }
@@ -132,50 +137,38 @@ async function rollupPrices(rows: GpuRow[]) {
     if (r.available) g.available += r.offer_count;
   }
   const now = new Date();
-  for (const g of groups.values()) {
+  const rollup = [...groups.values()].map((g) => {
     const sorted = [...g.prices].sort((a, b) => a - b);
-    const median = sorted[Math.floor(sorted.length / 2)];
-    const cheapest = sorted[0];
-    await sql`insert into gpu_prices values (${now}, ${g.model}, ${g.provider}, ${g.tier}, ${median}, ${cheapest}, ${g.available})
-              on conflict do nothing`.catch((e) => console.error("rollup insert", e));
-  }
-}
+    return {
+      fetched_at: now,
+      gpu_model: g.model,
+      provider: g.provider,
+      tier: g.tier,
+      median_price_per_gpu_hour_usd: sorted[Math.floor(sorted.length / 2)],
+      cheapest_price_per_gpu_hour_usd: sorted[0],
+      available_count: g.available,
+    };
+  });
+  if (rollup.length === 0) return;
 
-let started = false;
-// Cycle-owning token. When `inFlight !== null`, a tick is in progress;
-// each path that releases the latch (watchdog vs finally) checks that
-// it owns the current cycle before clearing, so a long-running tick #1
-// can't release the latch belonging to tick #2 mid-flight (which would
-// let tick #3 run concurrently with tick #2).
-let inFlight: symbol | null = null;
-
-// Hard watchdog: if a tick doesn't finish in this window, release the
-// latch so the next tick can run. Prevents a silently hung scraper or
-// stalled Postgres from permanently stopping the refresher.
-const TICK_WATCHDOG_MS = 90_000;
-
-async function tick() {
-  if (inFlight) {
-    console.warn("refresher: previous cycle still running, skipping tick");
-    return;
-  }
-  const myToken = Symbol("tick");
-  inFlight = myToken;
-  const watchdog = setTimeout(() => {
-    if (inFlight === myToken) {
-      console.error(
-        `refresher: watchdog fired after ${TICK_WATCHDOG_MS}ms — releasing in-flight latch`,
-      );
-      inFlight = null;
-    }
-  }, TICK_WATCHDOG_MS);
+  // One multi-row insert rather than ~260 sequential round trips. Under a
+  // hard function timeout that difference is the whole margin: measured at
+  // 81ms RTT the loop version cost ~21s on its own.
   try {
-    await refreshOnce();
+    await sql`
+      insert into gpu_prices ${sql(
+        rollup,
+        "fetched_at",
+        "gpu_model",
+        "provider",
+        "tier",
+        "median_price_per_gpu_hour_usd",
+        "cheapest_price_per_gpu_hour_usd",
+        "available_count",
+      )} on conflict do nothing
+    `;
   } catch (e) {
-    console.error("refresh failed", e);
-  } finally {
-    clearTimeout(watchdog);
-    if (inFlight === myToken) inFlight = null;
+    console.error("rollup insert", e);
   }
 }
 
@@ -184,22 +177,60 @@ async function tick() {
  * this it grows unbounded — ~21k rows/month × multi-KB each = GBs over a
  * year. gpu_prices rollup is kept indefinitely since it's small and the
  * historical price track is the actual product.
+ *
+ * Previously on a 6h setInterval; now driven by the daily cron hitting
+ * /api/refresh, which is well inside the 30-day retention window.
  */
-async function runRetention() {
+export async function runRetention() {
   try {
-    const { sql } = await import("@/lib/db");
     await sql`delete from snapshots where fetched_at < now() - interval '30 days'`;
   } catch (e) {
     console.warn("refresher: retention failed (non-fatal)", e);
   }
 }
 
-export function startRefresher() {
-  if (started) return;
-  started = true;
-  console.log("refresher: starting");
-  tick();
-  setInterval(tick, INTERVAL_MS);
-  // Retention every 6h.
-  setInterval(runRetention, 6 * 60 * 60_000);
+// Per-instance guard so a warm lambda doesn't re-check migrations on every
+// single refresh. A cold instance pays one cheap `select from _migrations`.
+let migrated = false;
+
+async function ensureMigrated() {
+  if (migrated) return;
+  const { migrate } = await import("@/lib/migrate");
+  await migrate();
+  migrated = true;
+}
+
+export type RefreshOutcome = "fresh" | "refreshed" | "busy" | "failed";
+
+/**
+ * Refresh only if the stored snapshot has aged out.
+ *
+ * This replaces the setInterval loop that ran on Railway. Serverless
+ * freezes the process between requests, so nothing fires on a timer —
+ * instead traffic drives freshness: a request reads (possibly stale) state,
+ * responds immediately, and schedules this via `after()`.
+ *
+ * The DB lease means that when 50 requests arrive at once and all see stale
+ * data, exactly one of them actually scrapes the providers.
+ */
+export async function refreshIfStale(
+  maxAgeMs = STALE_AFTER_MS,
+): Promise<RefreshOutcome> {
+  try {
+    const state = await readState();
+    if (stateAgeMs(state) < maxAgeMs) return "fresh";
+
+    if (!(await acquireRefreshLease())) return "busy";
+    try {
+      await refreshOnce();
+      return "refreshed";
+    } finally {
+      await releaseRefreshLease();
+    }
+  } catch (e) {
+    // Never let a background refresh failure surface as a request error —
+    // the response has already been sent by the time this runs.
+    console.error("refresher: background refresh failed", e);
+    return "failed";
+  }
 }

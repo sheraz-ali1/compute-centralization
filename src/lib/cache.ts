@@ -25,43 +25,7 @@ export function diffSnapshots(prev: GpuRow[], next: GpuRow[]): SnapshotDiff {
   return { added, removed, repriced };
 }
 
-type CacheEvent = {
-  type: "added" | "removed" | "repriced";
-  row?: GpuRow;
-  id?: string;
-  from?: number;
-  to?: number;
-  ts: string;
-};
-
-// In-memory singleton cache. Lives for the lifetime of the Node process.
-class Cache {
-  private rows: GpuRow[] = [];
-  private lastFetched: string | null = null;
-  private events: CacheEvent[] = [];
-
-  set(rows: GpuRow[], diff: SnapshotDiff) {
-    this.rows = rows;
-    this.lastFetched = new Date().toISOString();
-    const ts = this.lastFetched;
-    for (const r of diff.added) this.events.unshift({ type: "added", row: r, ts });
-    for (const r of diff.removed) this.events.unshift({ type: "removed", row: r, ts });
-    for (const e of diff.repriced)
-      this.events.unshift({ type: "repriced", id: e.id, from: e.from, to: e.to, ts });
-    this.events = this.events.slice(0, 100);
-  }
-  getRows() {
-    return this.rows;
-  }
-  getLastFetched() {
-    return this.lastFetched;
-  }
-  getEvents(n = 20) {
-    return this.events.slice(0, n);
-  }
-}
-
-// Pin singleton on globalThis so it survives across module instances
-// (Next dev mode / Turbopack may otherwise compile this module twice).
-const g = globalThis as unknown as { __computegridCache?: Cache };
-export const cache = g.__computegridCache ?? (g.__computegridCache = new Cache());
+// The in-memory Cache singleton that used to live here is gone. It assumed
+// one long-lived process (Railway) shared by the scraper and every request.
+// On serverless each invocation is isolated, so current state lives in
+// Postgres now — see src/lib/store.ts. Only this pure diff helper remains.

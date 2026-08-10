@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { cache } from "@/lib/cache";
+import { readState } from "@/lib/store";
 import { sql } from "@/lib/db";
 import type { GpuRow } from "@/lib/schema";
 
@@ -19,11 +19,13 @@ export const listGpusInput = z.object({
   limit: z.number().int().positive().max(500).default(100),
 });
 
-export function listGpus(input: z.infer<typeof listGpusInput>): GpuRow[] {
-  // Always operate on a copy of cache rows. The cache singleton is
-  // shared across all requests; .sort() in place would reorder it for
-  // every other concurrent caller.
-  let rows = cache.getRows().slice();
+export function listGpus(
+  input: z.infer<typeof listGpusInput>,
+  snapshot: GpuRow[],
+): GpuRow[] {
+  // Always operate on a copy — the caller may reuse the same snapshot
+  // array across several calls, and .sort() mutates in place.
+  let rows = snapshot.slice();
   if (input.gpu_model) {
     const q = input.gpu_model.toLowerCase();
     rows = rows.filter((r) => r.gpu_model.toLowerCase().includes(q));
@@ -59,6 +61,9 @@ export const findCheapestInput = z.object({
 });
 
 export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
+  // One snapshot read serves both filter passes below.
+  const snapshot = (await readState()).rows;
+
   // The candidate set: all rows matching the user's full filter,
   // restricted to the requested gpu_count exactly.
   const matches = listGpus({
@@ -68,7 +73,7 @@ export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
     region: input.region,
     available_only: true,
     limit: 500,
-  }).filter((r) => r.gpu_count === input.gpu_count);
+  }, snapshot).filter((r) => r.gpu_count === input.gpu_count);
 
   if (matches.length === 0)
     return { cheapest: null, alternatives: [], market_context: null };
@@ -87,7 +92,7 @@ export async function findCheapest(input: z.infer<typeof findCheapestInput>) {
     region: input.region,
     available_only: true,
     limit: 500,
-  }).filter((r) => r.gpu_count === input.gpu_count);
+  }, snapshot).filter((r) => r.gpu_count === input.gpu_count);
   const prices = slice
     .map((r) => r.price_per_gpu_hour_usd)
     .sort((a, b) => a - b);
